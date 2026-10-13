@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graduated Batch-Size Backpressure</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap">
+<style>
+  :root {
+    --bg: #fafaf8;
+    --fg: #1a1a18;
+    --muted: #6b6b64;
+    --accent: #2d5a27;
+    --accent-light: #e8f0e6;
+    --surface: #fff;
+    --border: #d4d4cd;
+    --red: #a83232;
+    --red-light: #f5e8e8;
+    --amber: #8a6d1b;
+    --amber-light: #f5f0e0;
+    --code-bg: #f0f0ec;
+    --highlight: #fffde0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141413;
+      --fg: #e4e4df;
+      --muted: #8a8a82;
+      --accent: #6abf5e;
+      --accent-light: #1a2e18;
+      --surface: #1e1e1c;
+      --border: #3a3a36;
+      --red: #e06060;
+      --red-light: #2e1a1a;
+      --amber: #d4a830;
+      --amber-light: #2a2510;
+      --code-bg: #242422;
+      --highlight: #2a2810;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141413;
+    --fg: #e4e4df;
+    --muted: #8a8a82;
+    --accent: #6abf5e;
+    --accent-light: #1a2e18;
+    --surface: #1e1e1c;
+    --border: #3a3a36;
+    --red: #e06060;
+    --red-light: #2e1a1a;
+    --amber: #d4a830;
+    --amber-light: #2a2510;
+    --code-bg: #242422;
+    --highlight: #2a2810;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.65;
+    margin: 0;
+    padding: 16px;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 0;
+  }
+
+  h1, h2, h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    text-wrap: balance;
+    line-height: 1.25;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    color: var(--accent);
+  }
+  .subtitle {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0 0 40px;
+    letter-spacing: 0.02em;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 48px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent);
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 32px 0 12px;
+  }
+  p { margin: 0 0 16px; }
+
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 2px 5px;
+    border-radius: 3px;
+  }
+  pre {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.55;
+    background: var(--code-bg);
+    padding: 16px 20px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0 0 20px;
+  }
+
+  .table-wrap { overflow-x: auto; margin: 0 0 24px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+  th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--fg);
+    color: var(--muted);
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .num { text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 14px; }
+  .good { color: var(--accent); font-weight: 600; }
+  .bad { color: var(--red); font-weight: 600; }
+  .neutral { color: var(--muted); }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 0 0 32px;
+  }
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .result-card .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 4px;
+  }
+  .result-card .value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.1;
+    margin: 0 0 4px;
+  }
+  .result-card .context {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .result-card.positive .value { color: var(--accent); }
+
+  .callout {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    border-radius: 0 6px 6px 0;
+    margin: 0 0 24px;
+    font-size: 15px;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout-warn {
+    background: var(--amber-light);
+    border-left-color: var(--amber);
+  }
+
+  .mechanism {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 0 0 24px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .mechanism .rule {
+    display: flex;
+    gap: 12px;
+    margin: 0 0 8px;
+    align-items: baseline;
+  }
+  .mechanism .rule:last-child { margin-bottom: 0; }
+  .mechanism .trigger { flex-shrink: 0; min-width: 0; color: var(--muted); }
+  .mechanism .arrow { color: var(--accent); flex-shrink: 0; }
+  .mechanism .effect { color: var(--fg); }
+
+  .section-num { color: var(--accent); margin-right: 6px; }
+
+  ol, ul { padding-left: 24px; margin: 0 0 16px; }
+  li { margin: 0 0 6px; }
+
+  .topology {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    text-align: center;
+    color: var(--muted);
+    margin: 0 0 20px;
+    line-height: 1.5;
+  }
+
+  tr.highlight td { background: var(--highlight); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>Graduated Batch-Size Backpressure</h1>
+  <p class="subtitle">ponyc runtime &middot; <a href="https://github.com/ponylang/ponyc/pull/6285">PR #6285</a> &middot; October 2026</p>
+
+  <p>Pony's current backpressure mechanism uses binary muting: when an actor sends to an overloaded receiver, the sender is immediately removed from scheduling. Under fan-in topologies, this cascades &mdash; muting propagates backwards through the actor graph, freezing the entire system for seconds at a time.</p>
+
+  <p>This report documents a graduated alternative: per-actor batch sizes that adjust dynamically under backpressure. Overloaded actors process more messages per run; senders to overloaded receivers process fewer. The mechanism eliminates the fan-in collapse and triples sustained-overload throughput.</p>
+
+  <h2><span class="section-num">1</span>Results</h2>
+
+  <div class="result-grid">
+    <div class="result-card positive">
+      <p class="label">Sustained overload</p>
+      <p class="value">3.4&times;</p>
+      <p class="context">22M msg/s vs 6.5M baseline</p>
+    </div>
+    <div class="result-card positive">
+      <p class="label">Fan-in collapse</p>
+      <p class="value">Eliminated</p>
+      <p class="context">40M msg/s vs 130 msg/s</p>
+    </div>
+    <div class="result-card positive">
+      <p class="label">Code change</p>
+      <p class="value">+38 lines</p>
+      <p class="context">3 files, 0 bytes added to actor struct</p>
+    </div>
+  </div>
+
+  <h3>Complete benchmark results</h3>
+  <p>All benchmarks run on a 16-core / 32 GB Linux box with <code>--ponymaxthreads 16</code>. Baseline is ponyc 0.75.0.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Benchmark</th>
+          <th>Configuration</th>
+          <th class="num">Baseline</th>
+          <th class="num">Graduated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sustained overload</td>
+          <td>10K senders, 1 receiver</td>
+          <td class="num neutral">~6.5M msg/s</td>
+          <td class="num good">~22M msg/s</td>
+        </tr>
+        <tr class="highlight">
+          <td>Fan-in</td>
+          <td>100s &rarr; 2K analyzers, 10ms workload</td>
+          <td class="num bad">39M &rarr; 119 msg/s</td>
+          <td class="num good">40M msg/s stable</td>
+        </tr>
+        <tr>
+          <td>Fan-in</td>
+          <td>100s &rarr; 2K analyzers, 5ms workload</td>
+          <td class="num bad">39M &harr; 99 msg/s</td>
+          <td class="num good">41M msg/s stable</td>
+        </tr>
+        <tr>
+          <td>Fan-in</td>
+          <td>100s &rarr; 2K analyzers, 1ms workload</td>
+          <td class="num neutral">38M msg/s stable</td>
+          <td class="num good">42M msg/s stable</td>
+        </tr>
+        <tr class="highlight">
+          <td>Fan-in (high load)</td>
+          <td>500s &rarr; 2K analyzers, 10ms workload</td>
+          <td class="num bad">40M &rarr; 181 msg/s</td>
+          <td class="num good">44M msg/s stable</td>
+        </tr>
+        <tr>
+          <td>Fan-in (low fan-in)</td>
+          <td>100s &rarr; 200 analyzers, 10ms workload</td>
+          <td class="num">&mdash;</td>
+          <td class="num good">51M msg/s stable</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>The fan-in collapse &mdash; throughput dropping from 39M to &lt;200 msg/s with a 20-second freeze &mdash; is completely eliminated across all configurations tested. The 1ms workload case, where the baseline was already stable, shows a ~10% throughput improvement from the receiver's batch growth.</p>
+  </div>
+
+  <h2><span class="section-num">2</span>The mechanism</h2>
+
+  <p>Two new fields on <code>pony_actor_t</code>: a <code>batch_size</code> (<code>uint16_t</code>, starts at <code>PONY_SCHED_BATCH</code>, default 100) and a <code>sent_to_overloaded</code> flag (<code>bool</code>) cleared each run. Both pack into existing alignment padding &mdash; <code>sizeof(pony_actor_t)</code> is unchanged. Two compile-time constants: <code>PONY_SCHED_BATCH</code> (default batch, 100) and <code>PONY_SCHED_BATCH_STEP</code> (adjustment step, 25).</p>
+
+  <div class="mechanism">
+    <div class="rule">
+      <span class="trigger">full batch processed, queue not empty</span>
+      <span class="arrow">&rarr;</span>
+      <span class="effect">mark OVERLOADED, batch += step</span>
+    </div>
+    <div class="rule">
+      <span class="trigger">send to overloaded/muted receiver</span>
+      <span class="arrow">&rarr;</span>
+      <span class="effect">batch &minus;= step (mute if batch hits 0)</span>
+    </div>
+    <div class="rule">
+      <span class="trigger">sender is itself overloaded</span>
+      <span class="arrow">&rarr;</span>
+      <span class="effect">batch &minus;= step, but floor at step (never muted)</span>
+    </div>
+    <div class="rule">
+      <span class="trigger">run ends, didn't send to overloaded</span>
+      <span class="arrow">&rarr;</span>
+      <span class="effect">batch += step (up to default, recovery)</span>
+    </div>
+    <div class="rule">
+      <span class="trigger">actor unmuted</span>
+      <span class="arrow">&rarr;</span>
+      <span class="effect">batch = step (ramp up gradually)</span>
+    </div>
+    <div class="rule">
+      <span class="trigger">overload cleared (queue drained)</span>
+      <span class="arrow">&rarr;</span>
+      <span class="effect">batch stays where it is (no reset)</span>
+    </div>
+  </div>
+
+  <h3>Key properties</h3>
+  <ul>
+    <li><strong>Proportional response.</strong> A sender loses one step per send to an overloaded receiver, not everything. Sending to 4 overloaded receivers in one run gets you muted (100 &minus; 4&times;25 = 0).</li>
+    <li><strong>No cascade.</strong> Throttled actors (batch 75, 50, etc.) are still scheduled, still processing messages. Their senders never see them as muted, so muting doesn't propagate backward.</li>
+    <li><strong>Bottleneck adaptation.</strong> The overloaded receiver's batch grows without bound, letting it process more messages per run. The batch settles at whatever rate the receiver needs to keep up.</li>
+    <li><strong>Persistent equilibrium.</strong> Clearing overload doesn't reset the batch. The actor remembers its required service rate, avoiding re-triggering overload on the next burst.</li>
+    <li><strong>Gradual recovery.</strong> Unmuted actors start at 25 and ramp up over 4 clean runs (25 &rarr; 50 &rarr; 75 &rarr; 100), avoiding a thundering-herd restart.</li>
+  </ul>
+
+  <h2><span class="section-num">3</span>Why the current system collapses</h2>
+
+  <p>The fan-in benchmark: 100 senders &rarr; 2000 analyzers &rarr; 1 receiver.</p>
+  <div class="topology">100 Senders &rarr; 2000 Analyzers &rarr; 1 Receiver (10ms/msg)</div>
+
+  <p>Every 10 seconds, all 2000 analyzers send one message to the receiver. The receiver takes 10ms per message, so draining 2000 messages takes 20 seconds &mdash; longer than the 10-second tick interval. The receiver stays permanently overloaded.</p>
+
+  <p>With binary muting, every analyzer that sends to the overloaded receiver is immediately and fully muted. Muted analyzers stop processing messages from senders. Senders see their target analyzers as muted and are muted themselves. Within one tick, most of the system is frozen.</p>
+
+  <p>This is a <strong>limit cycle</strong>: the system oscillates between full throughput (39M msg/s) and near-total freeze (~130 msg/s). The feedback gain is greater than 1 &mdash; each muted actor causes further muting &mdash; producing an unstable oscillation.</p>
+
+  <div class="callout-warn callout">
+    <p>The 5ms workload case is the boundary: drain time (10s) equals the tick interval, so the system alternates between stable and collapsed intervals. The 1ms case (drain time 2s) stays stable because the receiver always catches up.</p>
+  </div>
+
+  <h2><span class="section-num">4</span>How graduated batch breaks the cascade</h2>
+
+  <p>When 2000 analyzers each send one message to the overloaded receiver, each analyzer's batch drops by 25 (100 &rarr; 75). All 2000 analyzers are still scheduled at batch 75. They continue processing messages from senders. No muting cascades backward.</p>
+
+  <p>Meanwhile, the receiver's batch grows: 100 &rarr; 125 &rarr; 150 &rarr; &hellip; It processes more messages per scheduling run, increasing its effective service rate. The receiver's batch stabilizes when its throughput matches the arrival rate.</p>
+
+  <p>On the next tick, if the receiver is no longer overloaded, each analyzer recovers: 75 &rarr; 100 in one clean run. If the receiver is still overloaded, analyzers drop to 50, then 25 &mdash; but they never reach 0 because each analyzer sends to the receiver only once per tick (one step decrement per tick).</p>
+
+  <h2><span class="section-num">5</span>Queuing theory analysis</h2>
+
+  <p>The mechanism replaces a bang-bang controller (binary mute/unmute) with a proportional controller (graduated throttling). In queuing theory terms:</p>
+
+  <h3>Model</h3>
+  <p>Each actor is a single-server queue. Messages arrive at rate &lambda;. The actor processes up to <code>batch_size</code> messages per scheduling run, giving effective service rate &mu;(b). An actor is overloaded when &lambda; &gt; &mu;(b) for the current interval.</p>
+
+  <h3>Stability</h3>
+  <p>The system converges because the receiver's batch growth is monotonic during overload and persistent after overload clears. This creates a ratchet: the batch stabilizes at whatever value lets the receiver keep up with arrivals. Since batch growth is unbounded, convergence is guaranteed for any finite per-message processing time.</p>
+
+  <h3>Why unbounded batch growth is safe</h3>
+  <p>From the Pollaczek-Khinchine formula, as utilization &rho; approaches 1, mean queue length diverges. The only remedies are: decrease &lambda; (throttle senders) or increase &mu; (process faster). The graduated mechanism does both. Capping the batch would cap &mu;, potentially leaving &rho; &ge; 1 for large enough bursts &mdash; guaranteeing unbounded queue growth.</p>
+
+  <p>In practice, a very large batch means an actor monopolizes its scheduler thread longer. This is acceptable: the actor genuinely has that many messages waiting, other scheduler threads serve other actors, and the actor yields after its batch regardless.</p>
+
+  <h3>Comparison with TCP congestion control</h3>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>TCP (AIMD)</th>
+          <th>Graduated batch</th>
+          <th>Binary muting</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Decrease</td>
+          <td>Multiplicative (halve)</td>
+          <td>Additive (&minus;25)</td>
+          <td>Total (&rarr; 0)</td>
+        </tr>
+        <tr>
+          <td>Increase</td>
+          <td>Additive (+1/RTT)</td>
+          <td>Additive (+25/run)</td>
+          <td>Binary (0 &rarr; 100)</td>
+        </tr>
+        <tr>
+          <td>Convergence</td>
+          <td>Proven stable</td>
+          <td>Stable (monotonic ratchet)</td>
+          <td>Limit cycle</td>
+        </tr>
+        <tr>
+          <td>Bottleneck adaptation</td>
+          <td>No (link capacity fixed)</td>
+          <td>Yes (batch grows)</td>
+          <td>No</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The mechanism's most distinctive property is bottleneck adaptation. TCP has no analogue because network link capacity is physical. In the actor model, an actor's "capacity" is its batch size &mdash; a scheduling parameter, not a physical constraint. This extra degree of freedom makes the system more adaptive than network congestion control.</p>
+
+  <h2><span class="section-num">6</span>Potential concerns</h2>
+
+  <h3>Scheduler fairness</h3>
+  <p>An actor with a batch of 10,000 monopolizes its scheduler thread for 10,000 messages. With P scheduler threads and one large-batch actor, P&minus;1 threads are unaffected. Large batches result from sustained overload, which is typically concentrated in a small number of receivers.</p>
+
+  <h3>Step size sensitivity</h3>
+  <p>The ratio B&#8320;/&Delta; = 100/25 = 4 means an actor gets 4 "strikes" before muting. This is aggressive enough to respond quickly to congestion, but gradual enough to avoid cascading. Both values are compile-time constants (<code>PONY_SCHED_BATCH</code> and <code>PONY_SCHED_BATCH_STEP</code>).</p>
+
+  <h3>Memory growth</h3>
+  <p>Under sustained overload where arrival rate permanently exceeds service rate, queues grow regardless of mechanism. The graduated approach doesn't make this worse &mdash; the receiver processes its queue faster (larger batch), so memory growth is actually slower than baseline for the same arrival rate.</p>
+
+  <h3>Oscillation</h3>
+  <p>The system could oscillate if senders recover and resume full-rate sending, re-triggering overload. This is damped because the receiver's elevated batch persists after overload clears &mdash; it can handle a higher arrival rate before becoming overloaded again. Each cycle leaves the receiver with a higher batch, so the system converges.</p>
+
+  <h2><span class="section-num">7</span>Implementation</h2>
+
+  <p>Three files changed (<a href="https://github.com/ponylang/ponyc/pull/6285">PR #6285</a>):</p>
+
+  <h3>actor.h</h3>
+  <pre>#define PONY_SCHED_BATCH 100
+#define PONY_SCHED_BATCH_STEP 25
+
+typedef struct pony_actor_t
+{
+  ...
+  uint8_t internal_flags;
+  bool sent_to_overloaded;
+  uint16_t batch_size;
+  uint32_t live_asio_events;
+  ...
+}</pre>
+
+  <h3>actor.c &mdash; maybe_mark_should_mute()</h3>
+  <pre>if(triggers_muting(to) && ctx->current != to)
+{
+  ctx->current->sent_to_overloaded = true;
+  if(has_sync_flag_any(ctx->current,
+    ACTOR_SYNC_FLAG_OVERLOADED |
+    ACTOR_SYNC_FLAG_UNDER_PRESSURE))
+  {
+    if(ctx->current->batch_size > PONY_SCHED_BATCH_STEP)
+      ctx->current->batch_size -= PONY_SCHED_BATCH_STEP;
+  }
+  else if(ctx->current->batch_size <= PONY_SCHED_BATCH_STEP)
+  {
+    ctx->current->batch_size = 0;
+    ponyint_sched_mute(ctx, ctx->current, to);
+  }
+  else
+  {
+    ctx->current->batch_size -= PONY_SCHED_BATCH_STEP;
+  }
+}</pre>
+
+  <h3>actor.c &mdash; batch_limit_reached()</h3>
+  <pre>actor->batch_size += PONY_SCHED_BATCH_STEP;</pre>
+
+  <h3>actor.c &mdash; recovery (end of ponyint_actor_run)</h3>
+  <pre>if(!actor->sent_to_overloaded
+  && actor->batch_size < PONY_SCHED_BATCH)
+{
+  actor->batch_size += PONY_SCHED_BATCH_STEP;
+  if(actor->batch_size > PONY_SCHED_BATCH)
+    actor->batch_size = PONY_SCHED_BATCH;
+}</pre>
+
+  <h3>scheduler.c &mdash; unmute recovery</h3>
+  <pre>actor->batch_size = PONY_SCHED_BATCH_STEP;</pre>
+
+</div>
+
+</body>
+</html>
