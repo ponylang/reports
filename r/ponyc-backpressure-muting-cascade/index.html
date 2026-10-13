@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR #6285 Overview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #fafaf9;
+  --fg: #1c1917;
+  --muted: #78716c;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --border: #e7e5e4;
+  --code-bg: #f5f5f4;
+  --added-bg: #dcfce7;
+  --added-fg: #166534;
+  --removed-bg: #fee2e2;
+  --removed-fg: #991b1b;
+  --card-bg: #ffffff;
+  --nav-bg: #1c1917;
+  --nav-fg: #d6d3d1;
+  --nav-active: #60a5fa;
+  --diagram-node: #e0e7ff;
+  --diagram-edge: #6366f1;
+  --diagram-highlight: #f59e0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0a09;
+    --fg: #e7e5e4;
+    --muted: #a8a29e;
+    --accent: #60a5fa;
+    --accent-soft: #1e3a5f;
+    --border: #292524;
+    --code-bg: #1c1917;
+    --added-bg: #052e16;
+    --added-fg: #86efac;
+    --removed-bg: #450a0a;
+    --removed-fg: #fca5a5;
+    --card-bg: #1c1917;
+    --nav-bg: #0c0a09;
+    --nav-fg: #a8a29e;
+    --nav-active: #60a5fa;
+    --diagram-node: #312e81;
+    --diagram-edge: #818cf8;
+    --diagram-highlight: #fbbf24;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c0a09;
+  --fg: #e7e5e4;
+  --muted: #a8a29e;
+  --accent: #60a5fa;
+  --accent-soft: #1e3a5f;
+  --border: #292524;
+  --code-bg: #1c1917;
+  --added-bg: #052e16;
+  --added-fg: #86efac;
+  --removed-bg: #450a0a;
+  --removed-fg: #fca5a5;
+  --card-bg: #1c1917;
+  --nav-bg: #0c0a09;
+  --nav-fg: #a8a29e;
+  --nav-active: #60a5fa;
+  --diagram-node: #312e81;
+  --diagram-edge: #818cf8;
+  --diagram-highlight: #fbbf24;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Nav rail --- */
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100vh;
+  background: var(--nav-bg);
+  color: var(--nav-fg);
+  padding: 24px 0;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+nav .pr-label {
+  padding: 0 16px 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+nav .pr-title {
+  padding: 0 16px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.4;
+}
+
+nav ul { list-style: none; padding: 12px 0; margin: 0; flex: 1; }
+
+nav a {
+  display: block;
+  padding: 7px 16px 7px 20px;
+  color: var(--nav-fg);
+  text-decoration: none;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+nav a:hover { background: rgba(255,255,255,0.05); }
+
+nav a.active {
+  color: var(--nav-active);
+  background: rgba(96,165,250,0.08);
+}
+
+nav a.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 4px; bottom: 4px;
+  width: 3px;
+  background: var(--nav-active);
+  border-radius: 0 2px 2px 0;
+}
+
+nav .kbd-help {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+
+kbd {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* --- Main content --- */
+
+main {
+  margin-left: 220px;
+  padding: 32px 48px;
+  max-width: 860px;
+}
+
+section { margin-bottom: 48px; scroll-margin-top: 24px; }
+
+h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; text-wrap: balance; }
+h2 { font-size: 17px; font-weight: 600; margin-bottom: 16px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); display: inline-block; }
+h3 { font-size: 15px; font-weight: 600; margin: 20px 0 10px; }
+p { margin-bottom: 12px; }
+
+/* --- Components --- */
+
+.summary-box {
+  background: var(--accent-soft);
+  border-left: 4px solid var(--accent);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  border-radius: 0 6px 6px 0;
+  font-size: 14px;
+}
+
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  font-size: 14px;
+}
+
+.panel-header:hover { background: rgba(0,0,0,0.02); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .panel-header:hover { background: rgba(255,255,255,0.03); }
+}
+:root[data-theme="dark"] .panel-header:hover { background: rgba(255,255,255,0.03); }
+
+.panel-header .arrow { transition: transform 0.2s; font-size: 10px; color: var(--muted); flex-shrink: 0; }
+.panel.open .arrow { transform: rotate(90deg); }
+
+.panel-body { display: none; padding: 0 14px 14px; border-top: 1px solid var(--border); }
+.panel.open .panel-body { display: block; padding-top: 14px; }
+
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.badge-removed { background: var(--removed-bg); color: var(--removed-fg); }
+.badge-added { background: var(--added-bg); color: var(--added-fg); }
+.badge-changed { background: var(--accent-soft); color: var(--accent); }
+
+.sig { font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-width: 0; }
+
+.before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.before-after > div { border-radius: 5px; overflow: hidden; min-width: 0; }
+.before-after label { display: block; padding: 3px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.before-after .before label { background: var(--removed-bg); color: var(--removed-fg); }
+.before-after .after label { background: var(--added-bg); color: var(--added-fg); }
+
+pre { background: var(--code-bg); padding: 10px 14px; border-radius: 5px; overflow-x: auto; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; }
+.before-after pre { border-radius: 0 0 5px 5px; margin: 0; }
+
+code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+
+/* --- File map --- */
+
+.file-group-label { font-weight: 600; font-size: 13px; }
+.file-count { font-size: 12px; color: var(--muted); }
+.file-list { list-style: none; padding-left: 18px; }
+.file-list li { padding: 3px 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+.file-list a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+.file-list a:hover { color: var(--accent); text-decoration: underline; }
+.file-list .stat { font-size: 11px; margin-left: 6px; }
+.file-list .stat-add { color: var(--added-fg); }
+.file-list .stat-del { color: var(--removed-fg); }
+
+.stats { display: flex; gap: 16px; font-size: 13px; color: var(--muted); margin-bottom: 4px; flex-wrap: wrap; }
+
+/* --- Diagrams --- */
+
+.diagram-container { margin: 16px 0; padding: 20px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; overflow-x: auto; }
+.diagram-container svg { display: block; margin: 0 auto; }
+svg text { font-family: 'Inter', sans-serif; fill: var(--fg); }
+
+/* --- Release notes --- */
+
+.release-notes-content { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; font-size: 14px; line-height: 1.6; }
+.release-notes-content h3 { font-size: 15px; margin: 0 0 8px; }
+.release-notes-content p { margin-bottom: 8px; }
+.release-notes-content p:last-child { margin-bottom: 0; }
+
+/* --- Responsive --- */
+
+@media (max-width: 768px) {
+  nav { position: static; width: 100%; height: auto; padding: 12px 16px; }
+  nav ul { display: flex; flex-wrap: wrap; gap: 2px; padding: 8px 0; }
+  nav li { flex: none; }
+  nav a { padding: 5px 10px; font-size: 12px; border-radius: 4px; }
+  nav a.active::before { display: none; }
+  nav .kbd-help { display: none; }
+  main { margin-left: 0; padding: 16px; }
+  .before-after { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV RAIL -->
+<nav>
+  <div class="pr-label">ponylang/ponyc</div>
+  <div class="pr-title">#6285 &mdash; Fix backpressure muting cascade</div>
+  <ul>
+    <li><a href="#summary" class="active">Summary</a></li>
+    <li><a href="#motivation">Motivation</a></li>
+    <li><a href="#files">File Map</a></li>
+    <li><a href="#behavior">Behavioral Changes</a></li>
+    <li><a href="#api">API Changes</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#release-notes">Release Notes</a></li>
+  </ul>
+  <div class="kbd-help">
+    <kbd>j</kbd> / <kbd>k</kbd> next / prev section<br>
+    <kbd>Enter</kbd> expand focused item<br>
+    <kbd>Esc</kbd> collapse all
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main>
+
+<section id="summary">
+  <h1>Fix backpressure muting cascade</h1>
+  <div class="summary-box">
+    Replace binary muting with graduated per-actor batch sizes that adjust dynamically under backpressure, eliminating the fan-in muting cascade.
+  </div>
+  <div class="stats">
+    <span>9 files changed</span>
+    <span style="color:var(--added-fg)">+459</span>
+    <span style="color:var(--removed-fg)">&minus;9</span>
+  </div>
+</section>
+
+<section id="motivation">
+  <h2>Motivation</h2>
+  <p>Under fan-in topologies, the runtime's binary muting cascaded backward through the entire actor graph. When a receiver became overloaded, every actor that sent to it was immediately muted. Their senders then saw muted targets and were muted in turn. Within one scheduling interval, most of the system was frozen &mdash; throughput dropped from tens of millions of messages per second to near zero.</p>
+  <p>This replaces binary muting with proportional throttling. Senders to overloaded receivers have their batch size decremented rather than being removed from scheduling entirely. Overloaded receivers grow their batch to process more messages per run. The cascade is broken because throttled actors remain scheduled &mdash; their senders never see them as muted.</p>
+</section>
+
+<section id="files">
+  <h2>File Map</h2>
+
+  <div class="panel open">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Runtime</span>
+      <span class="file-count">3 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/c8c9a287bd9e5a625d55e182cfa8905d2dbea83b/src/libponyrt/actor/actor.c" target="_blank" rel="noopener">src/libponyrt/actor/actor.c</a> <span class="stat"><span class="stat-add">+40</span> <span class="stat-del">&minus;9</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/c8c9a287bd9e5a625d55e182cfa8905d2dbea83b/src/libponyrt/actor/actor.h" target="_blank" rel="noopener">src/libponyrt/actor/actor.h</a> <span class="stat"><span class="stat-add">+7</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/c8c9a287bd9e5a625d55e182cfa8905d2dbea83b/src/libponyrt/sched/scheduler.c" target="_blank" rel="noopener">src/libponyrt/sched/scheduler.c</a> <span class="stat"><span class="stat-add">+1</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Benchmarks</span>
+      <span class="file-count">5 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/c8c9a287bd9e5a625d55e182cfa8905d2dbea83b/benchmarks/backpressure/README.md" target="_blank" rel="noopener">benchmarks/backpressure/README.md</a> <span class="stat"><span class="stat-add">+46</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/c8c9a287bd9e5a625d55e182cfa8905d2dbea83b/benchmarks/backpressure/fan-in/main.pony" target="_blank" rel="noopener">benchmarks/backpressure/fan-in/main.pony</a> <span class="stat"><span class="stat-add">+307</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/c8c9a287bd9e5a625d55e182cfa8905d2dbea83b/benchmarks/backpressure/fan-in/.gitignore" target="_blank" rel="noopener">benchmarks/backpressure/fan-in/.gitignore</a> <span class="stat"><span class="stat-add">+1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/c8c9a287bd9e5a625d55e182cfa8905d2dbea83b/benchmarks/backpressure/overload/main.pony" target="_blank" rel="noopener">benchmarks/backpressure/overload/main.pony</a> <span class="stat"><span class="stat-add">+60</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/c8c9a287bd9e5a625d55e182cfa8905d2dbea83b/benchmarks/backpressure/overload/.gitignore" target="_blank" rel="noopener">benchmarks/backpressure/overload/.gitignore</a> <span class="stat"><span class="stat-add">+1</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Release notes</span>
+      <span class="file-count">1 file</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/c8c9a287bd9e5a625d55e182cfa8905d2dbea83b/.release-notes/fix-backpressure-cascade.md" target="_blank" rel="noopener">.release-notes/fix-backpressure-cascade.md</a> <span class="stat"><span class="stat-add">+5</span></span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="behavior">
+  <h2>Behavioral Changes</h2>
+
+  <h3>Proportional throttling replaces binary muting</h3>
+  <p>Senders to overloaded receivers have their per-actor <code>batch_size</code> decremented by <code>PONY_SCHED_BATCH_STEP</code> (25) per send, rather than being immediately muted. An actor is only fully muted when its batch reaches 0 &mdash; after 4 sends to overloaded receivers in one run at the default batch of 100.</p>
+
+  <h3>Overloaded actors process larger batches</h3>
+  <p>When an overloaded actor processes a full batch without emptying its queue, its <code>batch_size</code> grows by 25 with no upper bound. This lets bottleneck actors increase their effective service rate to match the arrival rate.</p>
+
+  <h3>Overloaded actors are never muted</h3>
+  <p>An actor that is itself overloaded (or under pressure) and sends to another overloaded actor has its batch decremented, but floored at <code>PONY_SCHED_BATCH_STEP</code> (25). It is never muted &mdash; the actor graph stays connected.</p>
+
+  <h3>Gradual recovery</h3>
+  <p>Unmuted actors restart at batch 25 and ramp up over 4 clean runs (25 &rarr; 50 &rarr; 75 &rarr; 100), avoiding a thundering-herd restart. Actors that weren't muted but were throttled recover the same way: +25 per run where they don't send to any overloaded receiver, capped at the default.</p>
+
+  <h3>Persistent equilibrium</h3>
+  <p>Clearing overload does not reset the batch. An actor that found its required service rate at batch 350 keeps that batch, avoiding re-triggering overload on the next burst.</p>
+
+  <h3>Zero struct growth</h3>
+  <p>The two new fields (<code>batch_size</code> as <code>uint16_t</code>, <code>sent_to_overloaded</code> as <code>bool</code>) pack into existing alignment padding between <code>internal_flags</code> and <code>live_asio_events</code>. <code>sizeof(pony_actor_t)</code> is unchanged.</p>
+</section>
+
+<section id="api">
+  <h2>API Changes</h2>
+
+  <div class="panel open">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="badge badge-changed">Changed</span>
+      <span class="sig">maybe_mark_should_mute() &mdash; graduated throttling</span>
+    </div>
+    <div class="panel-body">
+      <p>The core backpressure decision point. Previously muted the sender unconditionally; now decrements batch size proportionally, with special handling for overloaded senders.</p>
+      <div class="before-after">
+        <div class="before"><label>Before</label><pre>if(triggers_muting(to) &&
+  !has_sync_flag_any(ctx->current,
+    ACTOR_SYNC_FLAG_OVERLOADED |
+    ACTOR_SYNC_FLAG_UNDER_PRESSURE) &&
+  ctx->current != to)
+{
+  ponyint_sched_mute(ctx, ctx->current, to);
+}</pre></div>
+        <div class="after"><label>After</label><pre>if(triggers_muting(to) && ctx->current != to)
+{
+  ctx->current->sent_to_overloaded = true;
+  if(has_sync_flag_any(ctx->current,
+    ACTOR_SYNC_FLAG_OVERLOADED |
+    ACTOR_SYNC_FLAG_UNDER_PRESSURE))
+  {
+    if(ctx->current->batch_size > PONY_SCHED_BATCH_STEP)
+      ctx->current->batch_size -= PONY_SCHED_BATCH_STEP;
+  }
+  else if(ctx->current->batch_size <= PONY_SCHED_BATCH_STEP)
+  {
+    ctx->current->batch_size = 0;
+    ponyint_sched_mute(ctx, ctx->current, to);
+  }
+  else
+  {
+    ctx->current->batch_size -= PONY_SCHED_BATCH_STEP;
+  }
+}</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="badge badge-changed">Changed</span>
+      <span class="sig">pony_actor_t &mdash; two new fields in padding</span>
+    </div>
+    <div class="panel-body">
+      <p>Two fields added between <code>internal_flags</code> and <code>live_asio_events</code>, fitting in the existing 3-byte alignment gap. No change to struct size.</p>
+      <div class="before-after">
+        <div class="before"><label>Before</label><pre>uint8_t internal_flags;
+uint32_t live_asio_events;</pre></div>
+        <div class="after"><label>After</label><pre>uint8_t internal_flags;
+bool sent_to_overloaded;
+uint16_t batch_size;
+uint32_t live_asio_events;</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="badge badge-changed">Changed</span>
+      <span class="sig">ponyint_actor_run() &mdash; per-actor batch size</span>
+    </div>
+    <div class="panel-body">
+      <p>The batch limit is now read from the actor's own field instead of the compile-time constant.</p>
+      <div class="before-after">
+        <div class="before"><label>Before</label><pre>size_t batch = PONY_SCHED_BATCH;</pre></div>
+        <div class="after"><label>After</label><pre>actor->sent_to_overloaded = false;
+size_t batch = actor->batch_size;</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="badge badge-added">Added</span>
+      <span class="sig">PONY_SCHED_BATCH_STEP &mdash; compile-time constant</span>
+    </div>
+    <div class="panel-body">
+      <p><code>PONY_SCHED_BATCH</code> moved from <code>actor.c</code> to <code>actor.h</code> (so <code>scheduler.c</code> can reference it). <code>PONY_SCHED_BATCH_STEP</code> added alongside it.</p>
+      <pre>#define PONY_SCHED_BATCH 100
+#define PONY_SCHED_BATCH_STEP 25</pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="badge badge-added">Added</span>
+      <span class="sig">batch recovery &mdash; end of ponyint_actor_run()</span>
+    </div>
+    <div class="panel-body">
+      <p>After the overload check, if the actor didn't send to any overloaded receiver this run, its batch is incremented toward the default.</p>
+      <pre>if(!actor->sent_to_overloaded
+  && actor->batch_size < PONY_SCHED_BATCH)
+{
+  actor->batch_size += PONY_SCHED_BATCH_STEP;
+  if(actor->batch_size > PONY_SCHED_BATCH)
+    actor->batch_size = PONY_SCHED_BATCH;
+}</pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="badge badge-added">Added</span>
+      <span class="sig">sched_reschedule_unmuted() &mdash; gradual restart</span>
+    </div>
+    <div class="panel-body">
+      <p>Unmuted actors start at one step instead of the full default.</p>
+      <pre>actor->batch_size = PONY_SCHED_BATCH_STEP;</pre>
+    </div>
+  </div>
+</section>
+
+<section id="architecture">
+  <h2>Architecture</h2>
+
+  <div class="diagram-container">
+    <svg width="100%" viewBox="0 0 700 520" style="max-width:700px">
+      <defs>
+        <marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-edge)"/>
+        </marker>
+        <marker id="ah-hl" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-highlight)"/>
+        </marker>
+      </defs>
+
+      <!-- Before: Binary Muting -->
+      <text x="350" y="24" text-anchor="middle" font-size="14" font-weight="600">Before: Binary Muting</text>
+
+      <!-- Sender A -->
+      <rect x="20" y="50" width="150" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="95" y="77" text-anchor="middle" font-size="12" font-weight="500">Sender A (batch=100)</text>
+
+      <!-- Sender B -->
+      <rect x="20" y="130" width="150" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="95" y="157" text-anchor="middle" font-size="12" font-weight="500">Sender B (batch=100)</text>
+
+      <!-- Analyzer -->
+      <rect x="260" y="90" width="160" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="340" y="117" text-anchor="middle" font-size="12" font-weight="500">Analyzer (MUTED)</text>
+
+      <!-- Receiver -->
+      <rect x="510" y="90" width="170" height="44" rx="6" fill="var(--diagram-highlight)" stroke="var(--diagram-edge)" stroke-width="1.5" fill-opacity="0.3"/>
+      <text x="595" y="117" text-anchor="middle" font-size="12" font-weight="600">Receiver (OVERLOADED)</text>
+
+      <!-- Arrows -->
+      <line x1="170" y1="72" x2="258" y2="105" stroke="var(--removed-fg, #991b1b)" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <line x1="170" y1="152" x2="258" y2="118" stroke="var(--removed-fg, #991b1b)" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <line x1="420" y1="112" x2="508" y2="112" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+
+      <!-- Muted labels -->
+      <text x="95" y="195" text-anchor="middle" font-size="11" fill="var(--removed-fg, #991b1b)">&#x2716; also muted (cascade)</text>
+      <text x="340" y="155" text-anchor="middle" font-size="11" fill="var(--removed-fg, #991b1b)">&#x2716; muted immediately</text>
+
+      <!-- Divider -->
+      <line x1="20" y1="230" x2="680" y2="230" stroke="var(--border)" stroke-width="1" stroke-dasharray="6,4"/>
+
+      <!-- After: Graduated Batch -->
+      <text x="350" y="264" text-anchor="middle" font-size="14" font-weight="600">After: Graduated Batch Sizes</text>
+
+      <!-- Sender A -->
+      <rect x="20" y="290" width="150" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="95" y="317" text-anchor="middle" font-size="12" font-weight="500">Sender A (batch=100)</text>
+
+      <!-- Sender B -->
+      <rect x="20" y="370" width="150" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="95" y="397" text-anchor="middle" font-size="12" font-weight="500">Sender B (batch=100)</text>
+
+      <!-- Analyzer -->
+      <rect x="260" y="330" width="160" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="340" y="357" text-anchor="middle" font-size="12" font-weight="500">Analyzer (batch=75)</text>
+
+      <!-- Receiver -->
+      <rect x="510" y="330" width="170" height="44" rx="6" fill="var(--diagram-highlight)" stroke="var(--diagram-edge)" stroke-width="1.5" fill-opacity="0.3"/>
+      <text x="595" y="357" text-anchor="middle" font-size="12" font-weight="600">Receiver (batch=250)</text>
+
+      <!-- Arrows -->
+      <line x1="170" y1="312" x2="258" y2="345" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <line x1="170" y1="392" x2="258" y2="358" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <line x1="420" y1="352" x2="508" y2="352" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+
+      <!-- Labels -->
+      <text x="95" y="435" text-anchor="middle" font-size="11" fill="var(--added-fg, #166534)">&#x2714; still scheduled</text>
+      <text x="340" y="395" text-anchor="middle" font-size="11" fill="var(--added-fg, #166534)">&#x2714; throttled, still scheduled</text>
+      <text x="595" y="395" text-anchor="middle" font-size="11" fill="var(--added-fg, #166534)">&#x2714; batch grows to catch up</text>
+
+      <!-- Summary -->
+      <rect x="100" y="460" width="500" height="44" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/>
+      <text x="350" y="486" text-anchor="middle" font-size="12" font-weight="500">No cascade: throttled actors remain scheduled, senders unaffected</text>
+    </svg>
+  </div>
+</section>
+
+<section id="release-notes">
+  <h2>Release Notes</h2>
+  <div class="release-notes-content">
+    <h3>Fix backpressure muting cascade</h3>
+    <p>Under fan-in topologies &mdash; many actors sending to a shared slow receiver &mdash; the runtime's binary muting cascaded backward through the entire actor graph. When the receiver became overloaded, every actor that sent to it was immediately muted. Their senders then saw muted targets and were muted in turn. Within one scheduling interval, most of the system was frozen, dropping throughput from tens of millions of messages per second to near zero.</p>
+    <p>The runtime now uses graduated per-actor batch sizes instead of binary muting. Each actor's batch size adjusts dynamically: senders to overloaded receivers are throttled proportionally (one step per send) rather than muted outright, and overloaded receivers process larger batches to catch up. Actors are only fully muted after repeated sends to overloaded receivers within a single scheduling run. This eliminates the cascade &mdash; throttled actors remain scheduled, so their senders never see them as muted.</p>
+  </div>
+</section>
+
+</main>
+
+<script>
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('nav a[href^="#"]');
+let currentSection = 0;
+
+function updateActiveNav() {
+  navLinks.forEach(a => a.classList.remove('active'));
+  const id = sections[currentSection]?.id;
+  if (id) {
+    const link = document.querySelector('nav a[href="#' + id + '"]');
+    if (link) link.classList.add('active');
+  }
+}
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = Array.from(sections).indexOf(entry.target);
+      if (idx >= 0) { currentSection = idx; updateActiveNav(); }
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+
+sections.forEach(s => observer.observe(s));
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'j' || e.key === 'J') {
+    e.preventDefault();
+    currentSection = Math.min(currentSection + 1, sections.length - 1);
+    sections[currentSection].scrollIntoView({ behavior: 'smooth' });
+    updateActiveNav();
+  } else if (e.key === 'k' || e.key === 'K') {
+    e.preventDefault();
+    currentSection = Math.max(currentSection - 1, 0);
+    sections[currentSection].scrollIntoView({ behavior: 'smooth' });
+    updateActiveNav();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    sections[currentSection].querySelectorAll('.panel:not(.open)').forEach(el => el.classList.add('open'));
+  } else if (e.key === 'Escape') {
+    document.querySelectorAll('.panel.open').forEach(el => el.classList.remove('open'));
+  }
+});
+
+navLinks.forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+      const idx = Array.from(sections).indexOf(target);
+      if (idx >= 0) { currentSection = idx; updateActiveNav(); }
+    }
+  });
+});
+</script>
+
+</body>
+</html>
