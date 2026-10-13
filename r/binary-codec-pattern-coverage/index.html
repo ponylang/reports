@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Binary Codec Patterns</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #fafaf8;
+  --fg: #1a1a18;
+  --fg-muted: #6b6b65;
+  --surface: #f0efeb;
+  --border: #d8d7d2;
+  --accent: #2d5a27;
+  --accent-bg: #e8f0e7;
+  --code-bg: #f5f4f0;
+  --code-border: #e0dfdb;
+  --heading: #0f0f0e;
+  --tag-bg: #e2e1dc;
+  --tag-fg: #4a4a45;
+  --pattern-num: #8a8980;
+  --link: #2d5a27;
+  --font-display: 'Source Serif 4', 'Georgia', serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Menlo', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1a1b18;
+    --fg: #e0dfdb;
+    --fg-muted: #9a9990;
+    --surface: #242520;
+    --border: #3a3b36;
+    --accent: #6abf62;
+    --accent-bg: #1e2e1c;
+    --code-bg: #1f201c;
+    --code-border: #33342f;
+    --heading: #f0efeb;
+    --tag-bg: #2e2f2a;
+    --tag-fg: #b0afa8;
+    --pattern-num: #6b6b62;
+    --link: #6abf62;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1a1b18;
+  --fg: #e0dfdb;
+  --fg-muted: #9a9990;
+  --surface: #242520;
+  --border: #3a3b36;
+  --accent: #6abf62;
+  --accent-bg: #1e2e1c;
+  --code-bg: #1f201c;
+  --code-border: #33342f;
+  --heading: #f0efeb;
+  --tag-bg: #2e2f2a;
+  --tag-fg: #b0afa8;
+  --pattern-num: #6b6b62;
+  --link: #6abf62;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 2rem 16px 4rem;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--heading);
+  margin: 0 0 0.3rem;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.subtitle {
+  color: var(--fg-muted);
+  font-size: 0.95rem;
+  margin: 0 0 2.5rem;
+}
+
+h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--heading);
+  margin: 3rem 0 0.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  text-wrap: balance;
+}
+
+.pattern-section:first-of-type h2 {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 1.5rem;
+}
+
+.pattern-num {
+  color: var(--pattern-num);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+h3 {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 1.5rem 0 0.5rem;
+}
+
+p {
+  margin: 0 0 0.8rem;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0.5rem 0 1rem;
+}
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  background: var(--tag-bg);
+  color: var(--tag-fg);
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 0.5rem 0 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+p code, li code {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.note {
+  background: var(--accent-bg);
+  border-left: 3px solid var(--accent);
+  padding: 0.7rem 1rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  border-radius: 0 4px 4px 0;
+}
+
+.note p:last-child { margin: 0; }
+
+.elixir {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 4px;
+}
+
+.elixir-title {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.5rem;
+}
+
+.comparison {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--fg-muted);
+  margin: 0.5rem 0 0;
+}
+
+.comparison strong {
+  color: var(--fg);
+  font-style: normal;
+}
+
+.intro {
+  margin: 0 0 2rem;
+  line-height: 1.7;
+}
+
+.intro p {
+  margin: 0 0 0.8rem;
+}
+
+.summary-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.2rem;
+  margin: 2.5rem 0;
+}
+
+.summary-section h2 {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+  font-size: 1.15rem;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin: 0.8rem 0;
+}
+
+.summary-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-muted);
+  padding: 0.4rem 0.6rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.summary-table td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.summary-table tr:last-child td {
+  border-bottom: none;
+}
+
+.verdict-elixir { color: #b85c2c; }
+.verdict-pony { color: var(--accent); }
+.verdict-even { color: var(--fg-muted); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    .verdict-elixir { color: #e8915a; }
+  }
+}
+:root[data-theme="dark"] {
+  .verdict-elixir { color: #e8915a; }
+}
+
+.open-q {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  margin: 2.5rem 0 1rem;
+  border-radius: 4px;
+}
+
+.open-q-title {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--heading);
+  margin: 0 0 0.5rem;
+}
+
+.toc {
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 1rem 1.2rem;
+  margin: 0 0 2rem;
+}
+
+.toc-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+  margin: 0 0 0.5rem;
+}
+
+.toc ol {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.toc li {
+  margin: 0.2rem 0;
+  font-size: 0.9rem;
+}
+
+.toc a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+.toc a:hover {
+  text-decoration: underline;
+}
+
+.comment {
+  color: var(--fg-muted);
+}
+
+.kw {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+@media (max-width: 500px) {
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; }
+  pre { font-size: 0.75rem; padding: 0.7rem; }
+}
+</style>
+
+<h1>Binary Codec Library: Pattern Coverage</h1>
+<p class="subtitle">How the combinator library handles each binary parsing pattern, with Elixir comparisons showing where the library is simpler, comparable, or more complex.</p>
+
+<div class="intro">
+
+<h3>Context</h3>
+
+<p>This report is a response to <a href="https://github.com/ponylang/rfcs/issues/241">RFC #241: Elixir Style Binary Pattern Matching</a>. The RFC observes that binary parsing in Pony today requires manual bitmasks and byte-level operations &mdash; tedious, error-prone, and hard to read compared to Elixir's <code>&lt;&lt;&gt;&gt;</code> pattern syntax. The examples in the RFC (IPv4 header parsing and a badge-reader protocol) make the pain concrete.</p>
+
+<p>Rather than adding new language syntax, this report explores a <strong>pure library approach</strong>: a combinator library modeled on <a href="https://scodec.org/">scodec</a> (Scala) and Kennedy's pickler combinators. You define a <code>Codec[A]</code> value that handles both parsing (bytes &rarr; value) and building (value &rarr; bytes) from a single definition. Codecs compose &mdash; small codecs combine into larger ones, the same way functions compose.</p>
+
+<p>We identified 13 binary parsing patterns from real-world protocols. For each pattern, this report shows:</p>
+
+<ul style="margin: 0 0 0.8rem; padding-left: 1.4rem;">
+<li>What the pattern is, with a real-world example</li>
+<li>How the Pony combinator library would express it</li>
+<li>How the same pattern looks in Elixir</li>
+<li>A comparison &mdash; where the library is more complex, simpler, or roughly the same</li>
+</ul>
+
+<p>The Pony code shown here is an API sketch, not a finished implementation. The goal is to evaluate whether this approach addresses the RFC's concerns well enough to proceed without language changes.</p>
+
+</div>
+
+<section class="summary-section" id="summary">
+<h2>Elixir vs. Pony Combinator Library</h2>
+
+<p>Elixir's <code>&lt;&lt;&gt;&gt;</code> syntax is built into the language. The combinator library is pure Pony &mdash; no compiler changes. That difference shapes the tradeoffs.</p>
+
+<h3>Where Elixir is simpler</h3>
+<p>Elixir wins on the patterns that map directly to its pattern syntax: fixed-layout headers and literal matching. A UDP header is one line of pattern matching in Elixir; in Pony it's a class definition, a <code>Seq4</code> combinator, and an <code>Iso</code> with two lambdas. This is the base cost of a library approach &mdash; the codec is a value you construct, not syntax you write.</p>
+
+<h3>Where the Pony library is simpler</h3>
+<p>Elixir's pattern syntax can't express repetition, nesting, or "parse N of these" &mdash; you write recursive helper functions for each. The combinator library handles all three with single combinator calls: <code>Many(codec)</code>, <code>Count(U16BE, codec)</code>, or nesting codecs inside each other. Elixir also has no bidirectional story &mdash; you write decode and encode separately, and they must stay in sync manually. Every combinator in this library handles both directions from a single definition.</p>
+
+<h3>Pattern-by-pattern breakdown</h3>
+<table class="summary-table">
+<thead>
+<tr><th>Pattern</th><th>Verdict</th><th>Key difference</th></tr>
+</thead>
+<tbody>
+<tr><td>Fixed-layout headers</td><td class="verdict-elixir"><strong>Elixir simpler</strong></td><td>One-line pattern vs. Seq + Iso ceremony</td></tr>
+<tr><td>Sub-byte bit fields</td><td class="verdict-even"><strong>Comparable</strong></td><td>Both handle sub-byte naturally; Elixir terser, Pony typed</td></tr>
+<tr><td>Length-prefixed data</td><td class="verdict-elixir"><strong>Elixir simpler</strong></td><td>Inline dependent size vs. VariableSize/FlatZip combinator</td></tr>
+<tr><td>Discriminated messages</td><td class="verdict-elixir"><strong>Elixir simpler</strong></td><td>Function clause matching vs. class defs + Iso + widen + builder</td></tr>
+<tr><td>Multi-message parsing</td><td class="verdict-pony"><strong>Pony simpler</strong></td><td><code>Many(codec)</code> vs. manual recursive extract</td></tr>
+<tr><td>TCP stream framing</td><td class="verdict-even"><strong>Comparable</strong></td><td>Same structure; Pony's FrameDecoder is reusable</td></tr>
+<tr><td>Conditional fields</td><td class="verdict-even"><strong>Comparable</strong></td><td>Both need branching; Pony is bidirectional</td></tr>
+<tr><td>Literal matching</td><td class="verdict-elixir"><strong>Elixir simpler</strong></td><td>Inline bytes vs. Literal combinator</td></tr>
+<tr><td>Nested structures</td><td class="verdict-pony"><strong>Pony simpler</strong></td><td>Codec composition vs. Elixir's no-nesting limitation</td></tr>
+<tr><td>Repeated elements</td><td class="verdict-pony"><strong>Pony simpler</strong></td><td><code>Count(n, codec)</code> vs. manual recursive counting</td></tr>
+<tr><td>Checksums</td><td class="verdict-even"><strong>Comparable</strong></td><td>Both need validation logic beyond pattern matching</td></tr>
+<tr><td>Endianness detection</td><td class="verdict-even"><strong>Comparable</strong></td><td>Both branch; Elixir can't parameterize endianness</td></tr>
+<tr><td>Alignment / padding</td><td class="verdict-even"><strong>Comparable</strong></td><td>Same structure, different syntax</td></tr>
+</tbody>
+</table>
+
+<p>The short version: Elixir's syntax is hard to beat for simple, flat, one-shot parsing. The combinator library seems to earn its keep on composition &mdash; nesting, repetition, and multi-message &mdash; and on bidirectionality, where Elixir has no answer at all. The RFC's two examples (IPv4 header, badge commands) sit in Elixir's sweet spot; real-world protocols tend to need the patterns where the library appears stronger.</p>
+
+</section>
+
+<div class="intro" style="margin-top: 2rem;">
+
+<h3>Why not add Elixir's syntax to Pony?</h3>
+
+<p>Elixir's binary pattern matching gets much of its power from function clause dispatch &mdash; multiple function heads with different patterns, tried top-to-bottom. The discriminated message example is three function clauses, each matching a different tag byte. This is method overloading on argument shape, and it's central to how Elixir expresses protocol parsing.</p>
+
+<p>Pony doesn't have method overloading, and there's a reason for that. Method overloading interacts poorly with Pony's generics and <code>iftype</code> specialization &mdash; the combination introduces ambiguity in dispatch that creates real footguns. This was explored and <a href="https://github.com/ponylang/ponyc/discussions/6010">discussed</a> in the ponyc repo; the conclusion was that the interaction with other language features makes it undesirable.</p>
+
+<p>Pony can express the same dispatch with a single method and a <code>match</code> statement. It works, but it lacks the structural elegance of Elixir's clause-per-variant style. Adding binary pattern syntax to Pony would give you the field extraction (<code>&lt;&lt;version::4, ihl::4&gt;&gt;</code>), but without method overloading to dispatch on, you'd still land in a <code>match</code> block. The result would likely be a hybrid that's neither as clean as Elixir's nor as composable as a combinator library.</p>
+
+<p>This is part of why I think the library approach is a good fit for Pony: it works with the language as it is, builds on Pony's strengths (type safety, composition, reference capabilities), and doesn't require features that conflict with the rest of the type system.</p>
+
+</div>
+
+<nav class="toc">
+  <div class="toc-title">Patterns</div>
+  <ol>
+    <li><a href="#fixed-layout">Fixed-layout headers</a></li>
+    <li><a href="#bit-fields">Sub-byte bit fields</a></li>
+    <li><a href="#length-prefixed">Length-prefixed variable data</a></li>
+    <li><a href="#discriminated">Discriminated message types</a></li>
+    <li><a href="#multi-message">Multi-message parsing</a></li>
+    <li><a href="#streaming">TCP stream framing</a></li>
+    <li><a href="#conditional">Conditional / optional fields</a></li>
+    <li><a href="#literals">Literal / constant matching</a></li>
+    <li><a href="#nested">Nested structures</a></li>
+    <li><a href="#repeated">Repeated elements</a></li>
+    <li><a href="#checksums">Checksums and computed fields</a></li>
+    <li><a href="#endianness">Endianness detection</a></li>
+    <li><a href="#alignment">Alignment and padding</a></li>
+  </ol>
+  <div style="margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid var(--border);">
+    <div style="font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-muted); margin: 0 0 0.3rem;">Appendix</div>
+    <a href="#streaming-discussion" style="color: var(--link); text-decoration: none; font-size: 0.9rem;">Streaming: Elixir vs. Pony</a>
+  </div>
+</nav>
+
+<!-- Pattern 1 -->
+<section class="pattern-section" id="fixed-layout">
+<span class="pattern-num">01</span>
+<h2>Fixed-Layout Headers</h2>
+<div class="tags">
+  <span class="tag">IPv4</span>
+  <span class="tag">UDP</span>
+  <span class="tag">Ethernet</span>
+  <span class="tag">MPEG-TS</span>
+</div>
+
+<p>Multiple fields of known widths and endianness, laid out consecutively. The canonical binary parsing problem. Every protocol starts here.</p>
+
+<h3>Real-world example</h3>
+<p>A UDP header: source port (16-bit BE), destination port (16-bit BE), length (16-bit BE), checksum (16-bit BE). Four fields, 8 bytes total, all big-endian.</p>
+
+<h3>How it works</h3>
+<p>Fixed-arity <code>Seq</code> combinators sequence the field codecs. <code>Iso</code> maps the resulting tuple to a named domain type.</p>
+
+<pre><span class="kw">class val</span> UdpHeader
+  <span class="kw">let</span> src_port: U16
+  <span class="kw">let</span> dst_port: U16
+  <span class="kw">let</span> length: U16
+  <span class="kw">let</span> checksum: U16
+
+  <span class="kw">new val</span> create(s: U16, d: U16, l: U16, c: U16) =>
+    src_port = s; dst_port = d; length = l; checksum = c
+
+<span class="kw">let</span> udp_codec: Codec[UdpHeader] =
+  Iso[(U16, U16, U16, U16), UdpHeader](
+    Seq4(U16BE, U16BE, U16BE, U16BE),
+    {(t) => UdpHeader(t._1, t._2, t._3, t._4)},
+    {(h) => (h.src_port, h.dst_port, h.length, h.checksum)})</pre>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre>&lt;&lt;src_port::16-big, dst_port::16-big,
+  length::16-big, checksum::16-big&gt;&gt; = data</pre>
+<p class="comparison"><strong>Pony is more complex here.</strong> Elixir destructures in one pattern &mdash; four fields, one line. The Pony version needs a class definition, a Seq4 combinator, and an Iso with two lambdas to map between the tuple and the domain type. This is the base cost of a library approach vs. language syntax: you're building codecs compositionally, which pays off in later patterns but is overhead on simple fixed layouts.</p>
+</div>
+
+<div class="note">
+<p>Larger headers (10+ fields) compose from smaller Seq groups. An IPv4 header with 12 fields becomes two Seq6 groups mapped via Iso, then combined with Seq2.</p>
+</div>
+</section>
+
+<!-- Pattern 2 -->
+<section class="pattern-section" id="bit-fields">
+<span class="pattern-num">02</span>
+<h2>Sub-Byte Bit Fields</h2>
+<div class="tags">
+  <span class="tag">IP version/IHL</span>
+  <span class="tag">DNS flags</span>
+  <span class="tag">TCP flags</span>
+  <span class="tag">MPEG-TS PID</span>
+</div>
+
+<p>Fields narrower than a byte: 4-bit nibbles, 1-bit flags, 3-bit opcodes, 13-bit fragment offsets. The IPv4 header alone has 4-bit, 6-bit, 2-bit, 13-bit, and 3-bit fields.</p>
+
+<h3>Real-world example</h3>
+<p>The first byte of an IPv4 header packs two 4-bit fields: version (always 4) and IHL (header length in 32-bit words). These are not two U8 values &mdash; together they make one byte.</p>
+
+<h3>How it works</h3>
+<p>The library is bit-native. <code>BitCursor</code> tracks position at bit granularity, so sub-byte fields compose identically to byte-aligned ones. <code>BitsU8(4)</code> reads 4 bits and returns a <code>U8</code>. <code>BoolBit</code> reads one bit as a <code>Bool</code>.</p>
+
+<pre><span class="comment">// First byte of IPv4: version (4 bits) + IHL (4 bits)</span>
+<span class="kw">let</span> first_byte = Seq2(BitsU8(4), BitsU8(4))
+<span class="comment">// Codec[(U8, U8)] — two 4-bit values, together consuming one byte</span>
+
+<span class="comment">// DNS flags: 16 bits broken into 1+4+1+1+1+1+3+4 = 16</span>
+<span class="kw">let</span> dns_flags = Seq4(
+  BoolBit,                <span class="comment">// QR: query or response</span>
+  BitsU8(4),              <span class="comment">// opcode</span>
+  Seq4(BoolBit, BoolBit, BoolBit, BoolBit), <span class="comment">// AA, TC, RD, RA</span>
+  Seq2(BitsU8(3), BitsU8(4)))              <span class="comment">// Z, RCODE</span></pre>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre>&lt;&lt;version::4, ihl::4&gt;&gt; = &lt;&lt;0x45&gt;&gt;
+<span class="comment"># version => 4, ihl => 5</span>
+
+<span class="comment"># DNS flags: 1+4+1+1+1+1+3+4 = 16 bits</span>
+&lt;&lt;qr::1, opcode::4, aa::1, tc::1, rd::1,
+  ra::1, z::3, rcode::4&gt;&gt; = flags_bytes</pre>
+<p class="comparison"><strong>Roughly comparable.</strong> Both handle sub-byte fields naturally. Elixir's syntax is terser &mdash; <code>::4</code> vs. <code>BitsU8(4)</code> &mdash; but the structure is the same: list the fields with their bit widths. The Pony version carries type information (<code>BitsU8</code> vs. <code>BitsU16</code>) that Elixir doesn't &mdash; all Elixir integers are untyped at runtime.</p>
+</div>
+
+<div class="note">
+<p>Bit-level codecs and byte-level codecs mix freely in a Seq. No mode switching is needed &mdash; a <code>BitsU8(4)</code> followed by a <code>U16BE</code> reads 4 bits then 16 bits. Byte alignment is not required between fields (though <code>Bytes</code> and <code>Literal</code> do require alignment at their own boundary).</p>
+</div>
+</section>
+
+<!-- Pattern 3 -->
+<section class="pattern-section" id="length-prefixed">
+<span class="pattern-num">03</span>
+<h2>Length-Prefixed Variable Data</h2>
+<div class="tags">
+  <span class="tag">TLV</span>
+  <span class="tag">HTTP/2 frames</span>
+  <span class="tag">MessagePack</span>
+  <span class="tag">MQTT</span>
+</div>
+
+<p>A length field determines the size of the payload that follows. The core of TLV formats, HTTP/2 frames, MessagePack strings, and virtually every application protocol. The length field is structural &mdash; it's not part of the domain model.</p>
+
+<h3>Real-world example</h3>
+<p>An HTTP/2 frame: 24-bit length, 8-bit type, 8-bit flags, 31-bit stream ID (1 reserved bit + 31 data bits), then <code>length</code> bytes of payload.</p>
+
+<h3>How it works</h3>
+<p><code>VariableSize</code> encapsulates the pattern. On decode: read the size field, then decode the body from exactly that many bytes. On encode: encode the body, measure it, write the size, then the body. The length field never appears in the decoded type.</p>
+
+<pre><span class="comment">// Simple: U16 length prefix + byte payload</span>
+<span class="kw">let</span> message = VariableSize[Array[U8] val](U16BE, BytesRest)
+<span class="comment">// Codec[Array[U8] val]
+// Decode [0x00, 0x05, 0x48, 0x65, 0x6C, 0x6C, 0x6F]
+//        ↑ length=5   ↑ "Hello"
+// → Array[U8] val containing "Hello"
+// Encode "Hi" → [0x00, 0x02, 0x48, 0x69]</span>
+
+<span class="comment">// When the length field needs a non-standard width or encoding:</span>
+<span class="kw">let</span> http2_payload = VariableSize[Array[U8] val](
+  BitsU32(24),   <span class="comment">// 24-bit length</span>
+  BytesRest)</pre>
+
+<p>For cases where the length field itself is part of the domain model (the caller needs both the length and the data), <code>FlatZip</code> exposes it:</p>
+
+<pre><span class="kw">let</span> with_length = FlatZip[U16, Array[U8] val](
+  U16BE,
+  {(len) => Bytes(len.usize())})
+<span class="comment">// Codec[(U16, Array[U8] val)] — length stays in the result</span></pre>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre>&lt;&lt;len::16-big, payload::binary-size(len)&gt;&gt; = data
+<span class="comment"># len => 5, payload => "Hello"</span></pre>
+<p class="comparison"><strong>Pony is more complex here.</strong> Elixir handles dependent lengths in a single pattern &mdash; a later field's size references an earlier field's value. The Pony version needs either <code>VariableSize</code> (when the length isn't part of the domain model) or <code>FlatZip</code> (when it is). Straightforward once you know the combinators, but more machinery than Elixir's syntax. However, the Pony version is bidirectional &mdash; <code>VariableSize</code> automatically computes and writes the length on encode, while Elixir requires a separate construction expression.</p>
+</div>
+</section>
+
+<!-- Pattern 4 -->
+<section class="pattern-section" id="discriminated">
+<span class="pattern-num">04</span>
+<h2>Discriminated Message Types</h2>
+<div class="tags">
+  <span class="tag">MessagePack</span>
+  <span class="tag">MQTT</span>
+  <span class="tag">badge reader</span>
+  <span class="tag">RPC</span>
+</div>
+
+<p>A tag value selects which variant to decode. The tag might be a byte, a string literal, or a bit pattern. Each variant has its own body layout.</p>
+
+<h3>Real-world example</h3>
+<p>Sean's badge reader: a 10-byte badge ID followed by a 2-byte ASCII command. "UD" = up-key-down, "DD" = down-key-down, "LD" = left-key-down. The command literal acts as the discriminator.</p>
+
+<h3>How it works</h3>
+<p>A single <code>Discriminated</code> class handles any number of variants. The user defines the union type externally and registers each variant with its tag, its codec, and a narrowing function for the encode direction.</p>
+
+<pre><span class="kw">class val</span> UDMessage
+  <span class="kw">let</span> badge_id: Array[U8] val
+<span class="kw">class val</span> DDMessage
+  <span class="kw">let</span> badge_id: Array[U8] val
+<span class="kw">class val</span> LDMessage
+  <span class="kw">let</span> badge_id: Array[U8] val
+
+<span class="kw">type</span> BadgeMessage <span class="kw">is</span> (UDMessage | DDMessage | LDMessage)
+
+<span class="comment">// Each variant: 10-byte badge ID + 2-byte literal command</span>
+<span class="kw">let</span> ud = Iso[Array[U8] val, UDMessage](
+  ThenConst(Bytes(10), Literal([<span class="kw">as</span> U8: 'U'; 'D'])),
+  {(b) => UDMessage(b)}, {(m) => m.badge_id})
+
+<span class="kw">let</span> dd = Iso[Array[U8] val, DDMessage](
+  ThenConst(Bytes(10), Literal([<span class="kw">as</span> U8: 'D'; 'D'])),
+  {(b) => DDMessage(b)}, {(m) => m.badge_id})
+
+<span class="kw">let</span> ld = Iso[Array[U8] val, LDMessage](
+  ThenConst(Bytes(10), Literal([<span class="kw">as</span> U8: 'L'; 'D'])),
+  {(b) => LDMessage(b)}, {(m) => m.badge_id})
+
+<span class="comment">// Widen each to Codec[BadgeMessage], combine with Alt</span>
+<span class="kw">let</span> badge_codec: Codec[BadgeMessage] = Alt3(
+  ud.widen[BadgeMessage]({(m) => m <span class="kw">as</span> UDMessage}),
+  dd.widen[BadgeMessage]({(m) => m <span class="kw">as</span> DDMessage}),
+  ld.widen[BadgeMessage]({(m) => m <span class="kw">as</span> LDMessage}))</pre>
+
+<p>For byte-tag dispatch (the more common case), a <code>DiscriminatedBuilder</code> registers each variant with its tag, codec, and narrowing function. The builder enforces consistency: no duplicate tags, and the tag/codec pairing can't get out of sync because they're registered together.</p>
+
+<pre><span class="kw">type</span> ProtocolMsg <span class="kw">is</span> (Ping | Pong | DataMsg)
+
+<span class="kw">let</span> proto = DiscriminatedBuilder[U8, ProtocolMsg](U8Codec)
+  .>case_of[Ping](0x01, ping_codec,
+    {(m) => m <span class="kw">as</span> Ping})
+  .>case_of[Pong](0x02, pong_codec,
+    {(m) => m <span class="kw">as</span> Pong})
+  .>case_of[DataMsg](0x03, data_codec,
+    {(m) => m <span class="kw">as</span> DataMsg})
+  .build()
+<span class="comment">// Codec[ProtocolMsg]
+// Decode: reads tag byte, dispatches to matching codec
+// Encode: tests each case's narrowing fn, writes matching tag + body</span></pre>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre><span class="kw">def</span> handle_packet(&lt;&lt;0x01, payload::binary&gt;&gt;), <span class="kw">do</span>: handle_ping(payload)
+<span class="kw">def</span> handle_packet(&lt;&lt;0x02, len::16, data::binary-size(len)&gt;&gt;), <span class="kw">do</span>: handle_data(data)
+<span class="kw">def</span> handle_packet(&lt;&lt;0x03, code::8&gt;&gt;), <span class="kw">do</span>: handle_error(code)</pre>
+<p class="comparison"><strong>Pony is more complex here.</strong> Elixir dispatches via function clause matching &mdash; three lines, each a tag pattern + body parse. The Pony version needs class definitions for each variant, Iso wrappers with lambdas, widen calls, and either Alt or a DiscriminatedBuilder. That's substantially more code. The upside: the Pony version is bidirectional (encode is derived from the same definition), and the builder enforces no duplicate tags. But the setup cost is real.</p>
+</div>
+</section>
+
+<!-- Pattern 5 -->
+<section class="pattern-section" id="multi-message">
+<span class="pattern-num">05</span>
+<h2>Multi-Message Parsing</h2>
+<div class="tags">
+  <span class="tag">batch decode</span>
+  <span class="tag">log files</span>
+  <span class="tag">packet captures</span>
+</div>
+
+<p>A buffer containing multiple messages. Decode all of them. This is independent of how the buffer was obtained &mdash; it could be a file read, a UDP datagram, or a pre-assembled byte array.</p>
+
+<h3>Real-world example</h3>
+<p>A pcap file body: a sequence of packet records, each with a header (timestamp, lengths) followed by packet data. Read the whole file into a buffer, decode every record.</p>
+
+<h3>How it works</h3>
+<p><code>Many</code> applies a codec repeatedly until the input is exhausted. It stops on <code>InsufficientData</code> (not enough bytes for another complete element) and errors on <code>MalformedData</code>.</p>
+
+<pre><span class="comment">// Parse all messages from a buffer</span>
+<span class="kw">let</span> all_messages = Many[MyMessage](my_message_codec)
+<span class="comment">// Codec[Array[MyMessage] val]</span>
+
+<span class="kw">let</span> data: Array[U8] val = FileReader.read("capture.bin")
+<span class="kw">match</span> all_messages.decode(data, 0)
+| (<span class="kw">let</span> msgs: Array[MyMessage] val, <span class="kw">let</span> consumed: USize) =>
+  <span class="kw">for</span> msg <span class="kw">in</span> msgs.values() <span class="kw">do</span>
+    process(msg)
+  <span class="kw">end</span>
+| <span class="kw">let</span> m: MalformedData =>
+  env.out.print("Bad data: " + m.string())
+<span class="kw">end</span></pre>
+
+<p><code>Many</code> is bidirectional: on encode, it encodes each element in sequence.</p>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre><span class="comment"># Recursive extraction — the standard Erlang pattern</span>
+<span class="kw">defp</span> extract(&lt;&lt;ts::32, len::16, payload::binary-size(len),
+              rest::binary&gt;&gt;, acc) <span class="kw">do</span>
+  extract(rest, [{ts, payload} | acc])
+<span class="kw">end</span>
+<span class="kw">defp</span> extract(partial, acc), <span class="kw">do</span>: {Enum.reverse(acc), partial}</pre>
+<p class="comparison"><strong>Pony is simpler here.</strong> The Elixir recursive extract looks clean, but the catch-all clause (<code>defp extract(partial, acc)</code>) silently treats <em>all</em> match failures as "incomplete data." A malformed message also fails to match &mdash; so a corrupt record is indistinguishable from a truncated one. In a streaming context, this means a single corrupt message causes the buffer to grow forever, waiting for bytes that would "complete" something that was never a valid message. Each protocol writes its own extract function from scratch, and each one has this same silent-failure mode. <code>Many(codec)</code> handles the loop once, and the codec's error model (<code>InsufficientData</code> vs. <code>MalformedData</code>) propagates correctly &mdash; a corrupt record stops the parse with an error instead of silently accumulating. It also encodes, which the recursive function doesn't.</p>
+</div>
+</section>
+
+<!-- Pattern 5b -->
+<section class="pattern-section" id="streaming">
+<span class="pattern-num">05b</span>
+<h2>TCP Stream Framing</h2>
+<div class="tags">
+  <span class="tag">TCP</span>
+  <span class="tag">chunked delivery</span>
+  <span class="tag">framing</span>
+</div>
+
+<p>Data arrives in chunks over TCP. A message might span chunks. Accumulate bytes, extract complete messages, carry the remainder. This is orthogonal to the codec itself &mdash; any codec can be wrapped for streaming.</p>
+
+<h3>How it works</h3>
+<p><code>FrameDecoder</code> wraps any <code>Codec[A]</code> for use inside a <code>TCPConnectionNotify</code>. It holds a <code>ref</code> buffer, appends incoming <code>iso</code> chunks (consuming them), and runs the codec in a loop. The buffer is <code>ref</code>, which satisfies <code>decode</code>'s <code>box</code> parameter since <code>ref &lt;: box</code>.</p>
+
+<pre><span class="kw">class ref</span> FrameDecoder[A: Any val]
+  <span class="kw">let</span> _codec: Codec[A]
+  <span class="kw">var</span> _buffer: Array[U8] ref
+  <span class="kw">var</span> _offset: USize
+
+  <span class="kw">fun ref</span> received(data: Array[U8] iso,
+    notify: FrameNotify[A] <span class="kw">ref</span>)
+  =>
+    _buffer.append(<span class="kw">consume</span> data)
+    <span class="kw">var</span> continue = <span class="kw">true</span>
+    <span class="kw">while</span> continue <span class="kw">do</span>
+      <span class="comment">// _buffer is ref, decode takes box, ref <: box</span>
+      <span class="kw">match</span> _codec.decode(_buffer, _offset)
+      | (<span class="kw">let</span> value: A, <span class="kw">let</span> consumed: USize) =>
+        notify.frame_received(value)
+        _offset = _offset + (consumed / 8)
+      | InsufficientData => continue = <span class="kw">false</span>
+      | <span class="kw">let</span> m: MalformedData =>
+        notify.frame_error(m)
+        continue = <span class="kw">false</span>
+      <span class="kw">end</span>
+    <span class="kw">end</span>
+    _trim_consumed()</pre>
+
+<p>The error model matters here: <code>InsufficientData</code> means "wait for more bytes" (normal in streaming), while <code>MalformedData</code> means "this data is wrong" (a real error). A partial function (<code>?</code>) can't make that distinction.</p>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre><span class="comment"># The classic Erlang buffer-accumulation loop</span>
+<span class="kw">def</span> loop(buffer, parent) <span class="kw">do</span>
+  <span class="kw">receive do</span>
+    {:tcp, _sock, chunk} ->
+      data = buffer &lt;&gt; chunk
+      rest = extract(data, parent)
+      loop(rest, parent)
+    {:tcp_closed, _sock} -> :ok
+  <span class="kw">end</span>
+<span class="kw">end</span></pre>
+<p class="comparison"><strong>Roughly comparable.</strong> Both require the same fundamental structure: accumulate chunks, extract complete messages in a loop, carry the remainder. Elixir writes the buffer management inline; Pony wraps it in <code>FrameDecoder</code>. The <code>FrameDecoder</code> is reusable across protocols &mdash; plug in any codec. In Elixir, each protocol writes its own extract loop. Elixir also offers <code>:gen_tcp</code>'s <code>packet: N</code> option for simple length-prefixed framing, which has no Pony equivalent.</p>
+</div>
+
+<div class="note">
+<p>The buffer is <code>ref</code>, not <code>iso</code>. It never leaves the actor, so isolation isn't needed &mdash; <code>ref</code> is the right cap. Incoming <code>iso</code> chunks are consumed into it via <code>append</code>. <code>decode</code> takes <code>box</code>, and <code>ref &lt;: box</code>, so no copy or capability conversion is needed. Integer extraction is by value. <code>Bytes(n)</code> copies its N bytes &mdash; O(field size), not O(buffer size).</p>
+</div>
+</section>
+
+<!-- Pattern 6 -->
+<section class="pattern-section" id="conditional">
+<span class="pattern-num">06</span>
+<h2>Conditional / Optional Fields</h2>
+<div class="tags">
+  <span class="tag">MPEG-TS</span>
+  <span class="tag">TLS</span>
+  <span class="tag">DNS extensions</span>
+</div>
+
+<p>A field that is present or absent depending on a flag decoded earlier. The field's existence is data-dependent, not statically known.</p>
+
+<h3>Real-world example</h3>
+<p>MPEG-TS adaptation field: a PCR (program clock reference, 48 bits) is present only if the <code>pcr_flag</code> bit is set. Five other optional fields follow, each gated by its own flag bit.</p>
+
+<h3>How it works</h3>
+<p><code>FlatZip</code> threads the flag value to a <code>Conditional</code> codec. The result type includes <code>None</code> for the absent case.</p>
+
+<pre><span class="comment">// Flag bit controls whether 48-bit PCR follows</span>
+<span class="kw">let</span> pcr_field = BoolBit.flat_zip[(U64 | None)](
+  {(flag) =>
+    Conditional[U64](flag, BitsU64(48))})
+<span class="comment">// Codec[(Bool, (U64 | None))]
+// flag=true  → (true, 0x1234ABCD0000)
+// flag=false → (false, None)</span>
+
+<span class="comment">// Multiple conditional fields chained:</span>
+<span class="kw">let</span> adaptation = Seq2(
+  BoolBit.flat_zip[(U64 | None)](
+    {(f) => Conditional[U64](f, BitsU64(48))}),  <span class="comment">// PCR</span>
+  BoolBit.flat_zip[(U64 | None)](
+    {(f) => Conditional[U64](f, BitsU64(48))})   <span class="comment">// OPCR</span>
+)</pre>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre><span class="comment"># Can't express in a single pattern — needs two clauses or imperative logic</span>
+<span class="kw">case</span> pcr_flag <span class="kw">do</span>
+  1 -> &lt;&lt;pcr::48, rest::binary&gt;&gt; = remaining
+       {pcr, rest}
+  0 -> {nil, remaining}
+<span class="kw">end</span></pre>
+<p class="comparison"><strong>Roughly comparable.</strong> Neither language handles this in one expression. Elixir needs a case or multiple function clauses; Pony uses <code>FlatZip</code> + <code>Conditional</code>. The Pony version is more mechanical but still bidirectional &mdash; on encode, the flag is set based on whether the value is <code>None</code>. Elixir requires separate encode logic.</p>
+</div>
+</section>
+
+<!-- Pattern 7 -->
+<section class="pattern-section" id="literals">
+<span class="pattern-num">07</span>
+<h2>Literal / Constant Matching</h2>
+<div class="tags">
+  <span class="tag">magic numbers</span>
+  <span class="tag">sync bytes</span>
+  <span class="tag">protocol IDs</span>
+</div>
+
+<p>Fixed byte sequences that identify a protocol, message type, or frame boundary. On decode, the bytes must match exactly or the parse fails. On encode, the bytes are emitted verbatim.</p>
+
+<h3>Real-world example</h3>
+<p>MPEG-TS sync byte (0x47) at the start of every 188-byte packet. PNG magic bytes (<code>89 50 4E 47 0D 0A 1A 0A</code>). The "UD"/"DD" strings in the badge protocol.</p>
+
+<h3>How it works</h3>
+<p><code>Literal</code> matches fixed bytes without binding a value (its type is <code>Codec[None]</code>). <code>ConstThen</code> and <code>ThenConst</code> pair a literal with a data-carrying codec, keeping only the data.</p>
+
+<pre><span class="comment">// MPEG-TS: sync byte, then 3 bytes of header data</span>
+<span class="kw">let</span> ts_packet = ConstThen[U32](
+  Literal([<span class="kw">as</span> U8: 0x47]),
+  BitsU32(24))
+<span class="comment">// Decode: checks 0x47, reads 24 bits → Codec[U32]
+// Encode: writes 0x47, then 24 bits of the U32 value</span>
+
+<span class="comment">// PNG magic: just validate, bind nothing</span>
+<span class="kw">let</span> png_magic = Literal(
+  [<span class="kw">as</span> U8: 0x89; 0x50; 0x4E; 0x47; 0x0D; 0x0A; 0x1A; 0x0A])
+<span class="comment">// Codec[None] — fails on mismatch, advances cursor on match</span>
+
+<span class="comment">// Badge: data first, then the command literal</span>
+<span class="kw">let</span> ud_badge = ThenConst[Array[U8] val](
+  Bytes(10),
+  Literal([<span class="kw">as</span> U8: 'U'; 'D']))
+<span class="comment">// Codec[Array[U8] val] — 10 bytes of badge ID</span></pre>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre><span class="comment"># Literal bytes as guards in a pattern</span>
+&lt;&lt;0x47, header::binary-size(3), _rest::binary&gt;&gt; = data
+<span class="comment"># or string literals</span>
+&lt;&lt;"UD", badge_id::binary-size(10)&gt;&gt; = data</pre>
+<p class="comparison"><strong>Elixir is more concise.</strong> Literal bytes are inline in the pattern &mdash; no separate combinator needed. The Pony <code>Literal</code> / <code>ConstThen</code> / <code>ThenConst</code> naming is more verbose, but both do the same work. The Pony version emits the literal bytes on encode automatically; Elixir's construction syntax is separate.</p>
+</div>
+</section>
+
+<!-- Pattern 8 -->
+<section class="pattern-section" id="nested">
+<span class="pattern-num">08</span>
+<h2>Nested Structures</h2>
+<div class="tags">
+  <span class="tag">Ethernet → IP → TCP</span>
+  <span class="tag">TLV trees</span>
+  <span class="tag">file formats</span>
+</div>
+
+<p>One structure contains another: an Ethernet frame wraps an IP packet which wraps a TCP segment which wraps application data. Each layer has its own header and its own codec.</p>
+
+<h3>How it works</h3>
+<p>Codecs compose directly. A field in an outer codec can itself be a codec for a complex inner type. <code>VariableSize</code> bounds the inner codec to the right number of bytes.</p>
+
+<pre><span class="comment">// Inner: a simple key-value TLV entry</span>
+<span class="kw">class val</span> TlvEntry
+  <span class="kw">let</span> tag: U8
+  <span class="kw">let</span> value: Array[U8] val
+
+<span class="kw">let</span> tlv_entry = Iso[(U8, Array[U8] val), TlvEntry](
+  Seq2(U8Codec, VariableSize[Array[U8] val](U8Codec, BytesRest)),
+  {(t) => TlvEntry(t._1, t._2)},
+  {(e) => (e.tag, e.value)})
+
+<span class="comment">// Outer: a message containing nested TLV entries</span>
+<span class="kw">class val</span> TlvMessage
+  <span class="kw">let</span> version: U8
+  <span class="kw">let</span> entries: Array[TlvEntry] val
+
+<span class="kw">let</span> tlv_message = Iso[(U8, Array[TlvEntry] val), TlvMessage](
+  Seq2(U8Codec, Many[TlvEntry](tlv_entry)),
+  {(t) => TlvMessage(t._1, t._2)},
+  {(m) => (m.version, m.entries)})</pre>
+
+<p>Each layer is an independent codec. The nesting comes from using one codec as a building block in another &mdash; no special nesting syntax or combinator needed.</p>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre><span class="comment"># Can't nest binary patterns — each layer is a separate function</span>
+<span class="kw">def</span> parse_outer(&lt;&lt;version::8, rest::binary&gt;&gt;) <span class="kw">do</span>
+  entries = parse_entries(rest, [])
+  %TlvMessage{version: version, entries: entries}
+<span class="kw">end</span>
+
+<span class="kw">defp</span> parse_entries(&lt;&lt;tag::8, len::8,
+                    value::binary-size(len),
+                    rest::binary&gt;&gt;, acc) <span class="kw">do</span>
+  parse_entries(rest, [%TlvEntry{tag: tag, value: value} | acc])
+<span class="kw">end</span>
+<span class="kw">defp</span> parse_entries(<<>>, acc), <span class="kw">do</span>: Enum.reverse(acc)</pre>
+<p class="comparison"><strong>Pony is simpler here.</strong> Elixir can't nest <code>&lt;&lt;&gt;&gt;</code> patterns &mdash; each layer needs its own function and manual recursive iteration. The Pony version composes codecs directly: <code>Many[TlvEntry](tlv_entry)</code> inside a <code>Seq2</code>. The nesting is the composition &mdash; no separate functions, no manual recursion, and bidirectional.</p>
+</div>
+</section>
+
+<!-- Pattern 9 -->
+<section class="pattern-section" id="repeated">
+<span class="pattern-num">09</span>
+<h2>Repeated Elements</h2>
+<div class="tags">
+  <span class="tag">DNS records</span>
+  <span class="tag">TLV sequences</span>
+  <span class="tag">array payloads</span>
+</div>
+
+<p>N instances of a sub-structure, either counted by a preceding field or repeated until the input is exhausted.</p>
+
+<h3>Real-world example</h3>
+<p>DNS response: the header says <code>ancount = 3</code>, meaning 3 answer resource records follow. Each record has its own variable-length layout.</p>
+
+<h3>How it works</h3>
+<p><code>Count</code> reads a count field, then decodes that many instances. <code>Many</code> repeats until the input is consumed (or <code>InsufficientData</code> for a partial element).</p>
+
+<pre><span class="comment">// Counted: U16 count, then that many TlvEntry values</span>
+<span class="kw">let</span> counted_entries = Count[TlvEntry](U16BE, tlv_entry)
+<span class="comment">// Codec[Array[TlvEntry] val]
+// Decode: reads U16 = 3, then decodes 3 TlvEntry instances
+// Encode: writes 3 as U16, then encodes each entry</span>
+
+<span class="comment">// Greedy: decode TlvEntry values until input exhausted</span>
+<span class="kw">let</span> all_entries = Many[TlvEntry](tlv_entry)
+<span class="comment">// Codec[Array[TlvEntry] val]
+// Stops on InsufficientData (not enough for another entry)
+// Errors on MalformedData (data present but invalid)</span></pre>
+
+<p><code>Count</code> is bidirectional: on encode, it counts the array, writes the count field, then encodes each element. The count field value is never part of the domain type.</p>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre><span class="comment"># "Parse N records" requires a recursive function</span>
+<span class="kw">defp</span> parse_n(data, 0, acc), <span class="kw">do</span>: {Enum.reverse(acc), data}
+<span class="kw">defp</span> parse_n(&lt;&lt;tag::8, len::8,
+              value::binary-size(len),
+              rest::binary&gt;&gt;, n, acc) <span class="kw">do</span>
+  parse_n(rest, n - 1, [%{tag: tag, value: value} | acc])
+<span class="kw">end</span>
+
+<span class="comment"># Called after reading the count:</span>
+&lt;&lt;count::16-big, rest::binary&gt;&gt; = data
+{entries, _remaining} = parse_n(rest, count, [])</pre>
+<p class="comparison"><strong>Pony is simpler here.</strong> Elixir can't express "parse N of these" in a pattern &mdash; it needs a recursive helper that counts down. <code>Count(U16BE, tlv_entry)</code> does it in one line, and encodes the count automatically on the write side.</p>
+</div>
+</section>
+
+<!-- Pattern 10 -->
+<section class="pattern-section" id="checksums">
+<span class="pattern-num">10</span>
+<h2>Checksums and Computed Fields</h2>
+<div class="tags">
+  <span class="tag">IP checksum</span>
+  <span class="tag">CRC</span>
+  <span class="tag">length fields</span>
+</div>
+
+<p>Fields whose values are derived from other fields during encoding (checksum = function of data, length = payload size) and validated during decoding.</p>
+
+<h3>How it works</h3>
+<p>This pattern uses <code>Iso</code> with a validating forward function and a computing reverse function. The checksum field is decoded as a plain integer; the Iso's forward function validates it against the data. The reverse function computes it from the domain value.</p>
+
+<pre><span class="comment">// A frame: U32 CRC followed by payload bytes</span>
+<span class="comment">// Domain type holds just the payload; CRC is computed</span>
+<span class="kw">class val</span> CheckedFrame
+  <span class="kw">let</span> payload: Array[U8] val
+
+<span class="kw">let</span> checked_frame = Iso[(U32, Array[U8] val), CheckedFrame](
+  Seq2(U32BE, BytesRest),
+  {(t) =>
+    <span class="comment">// Validate: compute CRC of payload, compare to field</span>
+    <span class="kw">let</span> expected = CRC32(t._2)
+    <span class="kw">if</span> t._1 != expected <span class="kw">then</span> <span class="kw">error</span> <span class="kw">end</span>
+    CheckedFrame(t._2)},
+  {(f) =>
+    <span class="comment">// Compute: CRC is derived from payload on encode</span>
+    (CRC32(f.payload), f.payload)})</pre>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre><span class="comment"># Decode: extract CRC and payload, validate manually</span>
+&lt;&lt;crc::32-big, payload::binary&gt;&gt; = data
+^crc = :erlang.crc32(payload)  <span class="comment"># match fails if wrong</span>
+
+<span class="comment"># Encode: compute CRC, build binary</span>
+crc = :erlang.crc32(payload)
+&lt;&lt;crc::32-big, payload::binary&gt;&gt;</pre>
+<p class="comparison"><strong>Roughly comparable.</strong> Both require validation logic beyond simple pattern matching. Elixir uses pinned variables (<code>^crc</code>) or guard clauses; Pony uses a partial Iso forward function. The Pony version bundles the validation and computation into one codec definition; Elixir writes decode and encode as separate expressions that must stay consistent.</p>
+</div>
+
+<div class="note">
+<p>The forward function is partial (<code>?</code>) &mdash; a checksum mismatch produces a decode error. The Iso combinator would need to handle partial forward functions, surfacing the error as <code>MalformedData</code>. This is an extension to the basic Iso sketch.</p>
+</div>
+</section>
+
+<!-- Pattern 11 -->
+<section class="pattern-section" id="endianness">
+<span class="pattern-num">11</span>
+<h2>Endianness Detection</h2>
+<div class="tags">
+  <span class="tag">pcap</span>
+  <span class="tag">ELF</span>
+  <span class="tag">TIFF</span>
+</div>
+
+<p>The file or stream declares its byte ordering in a header field. All subsequent multi-byte integers use that ordering. The decoder must read the header, determine endianness, then use the right codec for every field that follows.</p>
+
+<h3>How it works</h3>
+<p>This is a <code>FlatZip</code>: decode the endianness marker, use its value to select between BE and LE codec sets for the rest of the structure. The endianness choice flows through the dependency chain.</p>
+
+<pre><span class="comment">// pcap: magic number determines endianness</span>
+<span class="comment">// 0xA1B2C3D4 = native (big-endian file)</span>
+<span class="comment">// 0xD4C3B2A1 = swapped (little-endian file)</span>
+
+<span class="kw">primitive</span> PcapEndian
+  <span class="kw">fun</span> codec(): Codec[(Bool, PcapHeader)] =>
+    U32BE.flat_zip[PcapHeader](
+      {(magic) =>
+        <span class="kw">let</span> be = magic == 0xA1B2C3D4
+        <span class="kw">if</span> be <span class="kw">then</span>
+          pcap_header_be()  <span class="comment">// all fields big-endian</span>
+        <span class="kw">else</span>
+          pcap_header_le()  <span class="comment">// all fields little-endian</span>
+        <span class="kw">end</span>})
+
+  <span class="kw">fun</span> pcap_header_be(): Codec[PcapHeader] =>
+    Iso[(U16, U16, U32, U32), PcapHeader](
+      Seq4(U16BE, U16BE, U32BE, U32BE), ...)
+
+  <span class="kw">fun</span> pcap_header_le(): Codec[PcapHeader] =>
+    Iso[(U16, U16, U32, U32), PcapHeader](
+      Seq4(U16LE, U16LE, U32LE, U32LE), ...)</pre>
+
+<p>The endianness choice is explicit at each level &mdash; no global state or implicit threading. Each codec function picks BE or LE for its fields. This is verbose for all-same-endianness formats, but a factory function (like <code>pcap_header_be()</code> vs <code>pcap_header_le()</code>) keeps the repetition in one place.</p>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre><span class="comment"># Read magic number, branch on endianness</span>
+<span class="kw">case</span> data <span class="kw">do</span>
+  &lt;&lt;0xA1B2C3D4::32, rest::binary&gt;&gt; ->
+    parse_pcap_header(rest, :big)
+  &lt;&lt;0xD4C3B2A1::32, rest::binary&gt;&gt; ->
+    parse_pcap_header(rest, :little)
+<span class="kw">end</span>
+
+<span class="comment"># But endianness can't be a variable in a pattern —</span>
+<span class="comment"># you need two full sets of patterns or use :binary.decode_unsigned/2</span></pre>
+<p class="comparison"><strong>Roughly comparable.</strong> Both need to branch on the endianness marker and use different decoders for each path. Elixir can't parameterize endianness in a pattern &mdash; <code>::big</code> and <code>::little</code> are compile-time modifiers, not runtime values &mdash; so you need two separate pattern sets or fall back to <code>:binary.decode_unsigned/2</code>. The Pony version has the same branching structure, but each branch is a reusable codec value.</p>
+</div>
+</section>
+
+<!-- Pattern 12 -->
+<section class="pattern-section" id="alignment">
+<span class="pattern-num">12</span>
+<h2>Alignment and Padding</h2>
+<div class="tags">
+  <span class="tag">MPEG-TS</span>
+  <span class="tag">IP options</span>
+  <span class="tag">file formats</span>
+</div>
+
+<p>Fields that must start on byte or word boundaries. Padding bytes fill the gap between the end of one field and the required alignment of the next.</p>
+
+<h3>How it works</h3>
+<p><code>SkipBits</code> consumes bits without binding a value. For alignment, the skip count is calculated from the current position &mdash; which requires a dependent codec.</p>
+
+<pre><span class="comment">// Skip 3 reserved bits between fields</span>
+<span class="kw">let</span> with_padding = Seq3(
+  BitsU8(4),           <span class="comment">// 4-bit field</span>
+  SkipBits(3),         <span class="comment">// 3 reserved bits</span>
+  BoolBit)             <span class="comment">// 1-bit flag — now byte-aligned</span>
+<span class="comment">// Codec[(U8, None, Bool)] — None from SkipBits</span>
+
+<span class="comment">// Fixed padding to word boundary</span>
+<span class="kw">let</span> padded = Seq2(
+  Bytes(3),            <span class="comment">// 3 bytes of data</span>
+  SkipBits(8))         <span class="comment">// 1 byte padding to 4-byte alignment</span></pre>
+
+<div class="elixir">
+<div class="elixir-title">In Elixir</div>
+<pre><span class="comment"># Skip reserved bits explicitly</span>
+&lt;&lt;field::4, _reserved::3, flag::1&gt;&gt; = byte
+
+<span class="comment"># Padding to alignment</span>
+&lt;&lt;data::binary-size(3), _pad::8, rest::binary&gt;&gt; = input</pre>
+<p class="comparison"><strong>Roughly comparable.</strong> Both handle static padding by naming the skip width explicitly. Neither has built-in dynamic alignment (skip to the next N-bit boundary). Elixir uses underscore-prefixed variables to discard padding; Pony uses <code>SkipBits</code>. The same structure, different syntax.</p>
+</div>
+
+<div class="note">
+<p>Dynamic alignment (skip N bits to reach the next byte boundary, where N depends on how many bits have been consumed) would need access to the cursor's current bit offset inside a <code>FlatZip</code>. The current design doesn't expose cursor position to codec constructors. For now, only static skip counts are supported. Dynamic alignment is a possible future extension.</p>
+</div>
+</section>
+
+<div style="margin: 3rem 0 2rem; border-top: 3px solid var(--border); padding-top: 1.5rem; text-align: center;">
+<span style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 500; letter-spacing: 0.12em; color: var(--fg-muted); text-transform: uppercase; background: var(--bg); padding: 0 1rem; position: relative; top: -2.2rem;">Appendix</span>
+</div>
+
+<section class="pattern-section" id="streaming-discussion" style="margin-top: 0;">
+<h2 style="border-top: none; padding-top: 0; margin-top: 0;">Streaming: Elixir vs. Pony</h2>
+
+<p>The patterns above cover parsing a complete buffer. Streaming is the harder problem: data arrives in chunks over TCP, and a message can span multiple chunks. A frame protocol says "expect 50 bytes of payload" but you might have the 2-byte header and only 2 bytes of payload so far. The system must recognize "not enough data yet," hold onto what it has, and resume when more arrives.</p>
+
+<h3>The concrete problem</h3>
+<p>A length-prefixed frame protocol: 2-byte big-endian length, then that many bytes of payload. Three TCP chunks arrive:</p>
+
+<pre><span class="comment">Chunk 1:  [00 32 AA BB]         — header says 50 bytes, but only 2 payload bytes</span>
+<span class="comment">Chunk 2:  [CC DD ... 48 more]   — now we have all 50</span>
+<span class="comment">Chunk 3:  [00 03 EE FF]         — next header says 3 bytes, only 2 here</span></pre>
+
+<p>After chunk 1, the parser has the length field (50) but only 2 of the 50 payload bytes. It must:</p>
+<ul style="margin: 0 0 0.8rem; padding-left: 1.4rem;">
+<li>Recognize this is incomplete, not malformed</li>
+<li>Keep the 4 bytes it has (header + partial payload)</li>
+<li>Wait for more data</li>
+</ul>
+<p>After chunk 2, it has enough to deliver the first message. After chunk 3, it's partway through the second message and must wait again.</p>
+
+<h3>In Elixir</h3>
+
+<p><strong>The simple path:</strong> Erlang's <code>:gen_tcp</code> has a <code>packet: N</code> option that handles this automatically. Set <code>packet: 2</code> on the socket (2-byte length prefix) and the runtime buffers internally &mdash; each <code>{:tcp, socket, data}</code> message delivers exactly one complete payload with the length header stripped. This is hard to beat when both sides can agree on the framing format.</p>
+
+<p><strong>Custom protocols</strong> don't get this for free. The standard pattern:</p>
+
+<pre><span class="kw">def</span> loop(buffer, parent) <span class="kw">do</span>
+  <span class="kw">receive do</span>
+    {:tcp, _sock, chunk} ->
+      data = buffer &lt;&gt; chunk
+      {messages, rest} = extract(data, [])
+      Enum.each(messages, &amp;process/1)
+      loop(rest, parent)
+    {:tcp_closed, _sock} -> :ok
+  <span class="kw">end</span>
+<span class="kw">end</span>
+
+<span class="kw">defp</span> extract(&lt;&lt;len::16, payload::binary-size(len),
+              rest::binary&gt;&gt;, acc) <span class="kw">do</span>
+  extract(rest, [payload | acc])
+<span class="kw">end</span>
+<span class="kw">defp</span> extract(partial, acc), <span class="kw">do</span>: {Enum.reverse(acc), partial}</pre>
+
+<p>Walking through our scenario:</p>
+<ul style="margin: 0 0 0.8rem; padding-left: 1.4rem;">
+<li><strong>Chunk 1 (<code>[00 32 AA BB]</code>):</strong> The pattern tries to match <code>&lt;&lt;len::16, payload::binary-size(len), rest::binary&gt;&gt;</code>. It reads <code>len = 50</code>, but <code>binary-size(50)</code> needs 50 bytes and only 2 are available. The match <em>fails</em>, falls through to the catch-all, and returns <code>{[], &lt;&lt;0, 50, 0xAA, 0xBB&gt;&gt;}</code>. The 4 bytes are kept as the buffer for next time.</li>
+<li><strong>Chunk 2:</strong> Buffer is now <code>&lt;&lt;0, 50, ...52 bytes total&gt;&gt;</code>. The pattern matches: <code>len = 50</code>, 50 payload bytes, <code>rest = &lt;&lt;&gt;&gt;</code>. Message delivered.</li>
+<li><strong>Chunk 3 (<code>[00 03 EE FF]</code>):</strong> <code>len = 3</code>, but only 2 payload bytes. Match fails, buffer carried.</li>
+</ul>
+
+<p>This works correctly for the incomplete-data case. But consider what happens if byte 3 of chunk 1 were corrupted &mdash; say the length field read as <code>0xFFFF</code> (65535). The pattern would try to match 65535 bytes, fail, and fall through to the same catch-all. The system would now buffer 65KB of data waiting for a "message" that was never actually sent. The catch-all clause can't distinguish "haven't received enough yet" from "the data is wrong." Both are just a failed match.</p>
+
+<h3>In Pony</h3>
+
+<p>The combinator library separates framing from parsing. The codec handles the protocol. <code>FrameDecoder</code> handles the streaming:</p>
+
+<pre><span class="comment">// The protocol codec — same one used for one-shot parsing</span>
+<span class="kw">let</span> frame_codec = VariableSize[Array[U8] val](U16BE, BytesRest)
+
+<span class="comment">// Wrap it for streaming</span>
+<span class="kw">let</span> framer = FrameDecoder[Array[U8] val](frame_codec)
+
+<span class="comment">// Inside TCPConnectionNotify.received():</span>
+framer.received(<span class="kw">consume</span> data, my_notify)</pre>
+
+<p>Walking through the same scenario:</p>
+<ul style="margin: 0 0 0.8rem; padding-left: 1.4rem;">
+<li><strong>Chunk 1:</strong> <code>FrameDecoder</code> appends the chunk to its buffer, calls <code>frame_codec.decode(buffer, 0)</code>. The codec reads <code>len = 50</code> via <code>U16BE</code>, then <code>BytesRest</code> tries to read 50 bytes but only 2 are available. It returns <code>InsufficientData</code>. <code>FrameDecoder</code> stops the loop and keeps the buffer intact.</li>
+<li><strong>Chunk 2:</strong> Buffer now has 52 bytes. Decode succeeds, returns the 50-byte payload + bits consumed. <code>FrameDecoder</code> calls <code>notify.frame_received(payload)</code>, advances the offset, and tries to decode again. <code>InsufficientData</code> (nothing left). Trims consumed bytes.</li>
+<li><strong>Chunk 3:</strong> Same as chunk 1 &mdash; <code>InsufficientData</code>, wait for more.</li>
+</ul>
+
+<p>Now the corruption scenario: the length field reads as 65535. <code>VariableSize</code> reads the length via <code>U16BE</code> (succeeds &mdash; it's a valid U16). Then it tries to read 65535 bytes via <code>BytesRest</code>. Not enough data &mdash; <code>InsufficientData</code>.</p>
+
+<p>This is the same outcome as Elixir: the system waits. The length field is a valid integer; there's no way to know 65535 is "wrong" without application-level knowledge (e.g., a maximum message size). Both systems need an upper bound check for this case. The difference shows up when the corruption is in the <em>payload</em>, not the length &mdash; if the inner codec encounters data that is structurally invalid (a tag byte that matches no known variant, a nested structure that doesn't parse), it returns <code>MalformedData</code>. <code>FrameDecoder</code> calls <code>notify.frame_error()</code> instead of silently buffering. Elixir's catch-all treats this the same as "not enough data."</p>
+
+<h3>Key differences</h3>
+<table class="summary-table">
+<thead>
+<tr><th></th><th>Elixir</th><th>Pony combinator library</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Simple framing</strong></td><td><code>packet: N</code> on the socket &mdash; automatic, zero code</td><td>No equivalent; always explicit <code>FrameDecoder</code></td></tr>
+<tr><td><strong>Custom framing</strong></td><td>Manual extract function, written per protocol</td><td>Reusable <code>FrameDecoder</code> wrapping any codec</td></tr>
+<tr><td><strong>Partial message</strong></td><td>Match fails, catch-all keeps buffer</td><td><code>InsufficientData</code>, <code>FrameDecoder</code> keeps buffer</td></tr>
+<tr><td><strong>Corrupt payload</strong></td><td>Match fails &mdash; indistinguishable from incomplete</td><td><code>MalformedData</code> &mdash; reported as an error</td></tr>
+<tr><td><strong>Corrupt length</strong></td><td>Buffers forever (same problem in both)</td><td>Buffers forever (needs app-level max-size check in both)</td></tr>
+<tr><td><strong>Buffer management</strong></td><td>Binary concatenation in process loop</td><td><code>FrameDecoder</code> owns a <code>ref</code> buffer, trims consumed bytes</td></tr>
+<tr><td><strong>Codec reuse</strong></td><td>Same patterns work one-shot and streaming</td><td>Same codec works one-shot and in <code>FrameDecoder</code></td></tr>
+</tbody>
+</table>
+
+<p>The honest summary: for simple length-prefixed protocols, Elixir's <code>packet: N</code> is unbeatable &mdash; zero code. For custom protocols, both approaches handle partial delivery correctly. The Pony library's potential advantage is distinguishing corrupt data from incomplete data, and making the framing logic reusable rather than hand-written per protocol.</p>
+
+</section>
+
+
+</body>
+</html>
