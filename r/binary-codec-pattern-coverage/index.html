@@ -375,7 +375,7 @@ p code, li code {
 <p>Elixir's <code>&lt;&lt;&gt;&gt;</code> syntax is built into the language. The combinator library is pure Pony &mdash; no compiler changes. That difference shapes the tradeoffs.</p>
 
 <h3>Where Elixir is simpler</h3>
-<p>Elixir wins on the patterns that map directly to its pattern syntax: fixed-layout headers and literal matching. A UDP header is one line of pattern matching in Elixir; in Pony it's a class definition, a <code>Seq4</code> combinator, and an <code>Iso</code> with two lambdas. This is the base cost of a library approach &mdash; the codec is a value you construct, not syntax you write.</p>
+<p>Elixir wins on the patterns that map directly to its pattern syntax: fixed-layout headers and literal matching. A UDP header is one line of pattern matching in Elixir; in Pony it's a class definition, a <code>Seq4</code> combinator, and an <code>Mapped</code> with two lambdas. This is the base cost of a library approach &mdash; the codec is a value you construct, not syntax you write.</p>
 
 <h3>Where the Pony library is simpler</h3>
 <p>Elixir's pattern syntax can't express repetition, nesting, or "parse N of these" &mdash; you write recursive helper functions for each. The combinator library handles all three with single combinator calls: <code>Many(codec)</code>, <code>Count(U16BE, codec)</code>, or nesting codecs inside each other. Elixir also has no bidirectional story &mdash; you write decode and encode separately, and they must stay in sync manually. Every combinator in this library handles both directions from a single definition.</p>
@@ -386,10 +386,10 @@ p code, li code {
 <tr><th>Pattern</th><th>Verdict</th><th>Key difference</th></tr>
 </thead>
 <tbody>
-<tr><td>Fixed-layout headers</td><td class="verdict-elixir"><strong>Elixir simpler</strong></td><td>One-line pattern vs. Seq + Iso ceremony</td></tr>
+<tr><td>Fixed-layout headers</td><td class="verdict-elixir"><strong>Elixir simpler</strong></td><td>One-line pattern vs. Seq + Mapped ceremony</td></tr>
 <tr><td>Sub-byte bit fields</td><td class="verdict-even"><strong>Comparable</strong></td><td>Both handle sub-byte naturally; Elixir terser, Pony typed</td></tr>
 <tr><td>Length-prefixed data</td><td class="verdict-elixir"><strong>Elixir simpler</strong></td><td>Inline dependent size vs. VariableSize/FlatZip combinator</td></tr>
-<tr><td>Discriminated messages</td><td class="verdict-elixir"><strong>Elixir simpler</strong></td><td>Function clause matching vs. class defs + Iso + widen + builder</td></tr>
+<tr><td>Discriminated messages</td><td class="verdict-elixir"><strong>Elixir simpler</strong></td><td>Function clause matching vs. class defs + Mapped + widen + builder</td></tr>
 <tr><td>Multi-message parsing</td><td class="verdict-pony"><strong>Pony simpler</strong></td><td><code>Many(codec)</code> vs. manual recursive extract</td></tr>
 <tr><td>TCP stream framing</td><td class="verdict-even"><strong>Comparable</strong></td><td>Same structure; Pony's FrameDecoder is reusable</td></tr>
 <tr><td>Conditional fields</td><td class="verdict-even"><strong>Comparable</strong></td><td>Both need branching; Pony is bidirectional</td></tr>
@@ -460,7 +460,7 @@ p code, li code {
 <p>A UDP header: source port (16-bit BE), destination port (16-bit BE), length (16-bit BE), checksum (16-bit BE). Four fields, 8 bytes total, all big-endian.</p>
 
 <h3>How it works</h3>
-<p>Fixed-arity <code>Seq</code> combinators sequence the field codecs. <code>Iso</code> maps the resulting tuple to a named domain type.</p>
+<p>Fixed-arity <code>Seq</code> combinators sequence the field codecs. <code>Mapped</code> maps the resulting tuple to a named domain type.</p>
 
 <pre><span class="kw">class val</span> UdpHeader
   <span class="kw">let</span> src_port: U16
@@ -472,7 +472,7 @@ p code, li code {
     src_port = s; dst_port = d; length = l; checksum = c
 
 <span class="kw">let</span> udp_codec: Codec[UdpHeader] =
-  Iso[(U16, U16, U16, U16), UdpHeader](
+  Mapped[(U16, U16, U16, U16), UdpHeader](
     Seq4(U16BE, U16BE, U16BE, U16BE),
     {(t) => UdpHeader(t._1, t._2, t._3, t._4)},
     {(h) => (h.src_port, h.dst_port, h.length, h.checksum)})</pre>
@@ -481,11 +481,11 @@ p code, li code {
 <div class="elixir-title">In Elixir</div>
 <pre>&lt;&lt;src_port::16-big, dst_port::16-big,
   length::16-big, checksum::16-big&gt;&gt; = data</pre>
-<p class="comparison"><strong>Pony is more complex here.</strong> Elixir destructures in one pattern &mdash; four fields, one line. The Pony version needs a class definition, a Seq4 combinator, and an Iso with two lambdas to map between the tuple and the domain type. This is the base cost of a library approach vs. language syntax: you're building codecs compositionally, which pays off in later patterns but is overhead on simple fixed layouts.</p>
+<p class="comparison"><strong>Pony is more complex here.</strong> Elixir destructures in one pattern &mdash; four fields, one line. The Pony version needs a class definition, a Seq4 combinator, and an Mapped with two lambdas to map between the tuple and the domain type. This is the base cost of a library approach vs. language syntax: you're building codecs compositionally, which pays off in later patterns but is overhead on simple fixed layouts.</p>
 </div>
 
 <div class="note">
-<p>Larger headers (10+ fields) compose from smaller Seq groups. An IPv4 header with 12 fields becomes two Seq6 groups mapped via Iso, then combined with Seq2.</p>
+<p>Larger headers (10+ fields) compose from smaller Seq groups. An IPv4 header with 12 fields becomes two Seq6 groups mapped via Mapped, then combined with Seq2.</p>
 </div>
 </section>
 
@@ -611,15 +611,15 @@ p code, li code {
 <span class="kw">type</span> BadgeMessage <span class="kw">is</span> (UDMessage | DDMessage | LDMessage)
 
 <span class="comment">// Each variant: 10-byte badge ID + 2-byte literal command</span>
-<span class="kw">let</span> ud = Iso[Array[U8] val, UDMessage](
+<span class="kw">let</span> ud = Mapped[Array[U8] val, UDMessage](
   ThenConst(Bytes(10), Literal([<span class="kw">as</span> U8: 'U'; 'D'])),
   {(b) => UDMessage(b)}, {(m) => m.badge_id})
 
-<span class="kw">let</span> dd = Iso[Array[U8] val, DDMessage](
+<span class="kw">let</span> dd = Mapped[Array[U8] val, DDMessage](
   ThenConst(Bytes(10), Literal([<span class="kw">as</span> U8: 'D'; 'D'])),
   {(b) => DDMessage(b)}, {(m) => m.badge_id})
 
-<span class="kw">let</span> ld = Iso[Array[U8] val, LDMessage](
+<span class="kw">let</span> ld = Mapped[Array[U8] val, LDMessage](
   ThenConst(Bytes(10), Literal([<span class="kw">as</span> U8: 'L'; 'D'])),
   {(b) => LDMessage(b)}, {(m) => m.badge_id})
 
@@ -650,7 +650,7 @@ p code, li code {
 <pre><span class="kw">def</span> handle_packet(&lt;&lt;0x01, payload::binary&gt;&gt;), <span class="kw">do</span>: handle_ping(payload)
 <span class="kw">def</span> handle_packet(&lt;&lt;0x02, len::16, data::binary-size(len)&gt;&gt;), <span class="kw">do</span>: handle_data(data)
 <span class="kw">def</span> handle_packet(&lt;&lt;0x03, code::8&gt;&gt;), <span class="kw">do</span>: handle_error(code)</pre>
-<p class="comparison"><strong>Pony is more complex here.</strong> Elixir dispatches via function clause matching &mdash; three lines, each a tag pattern + body parse. The Pony version needs class definitions for each variant, Iso wrappers with lambdas, widen calls, and either Alt or a DiscriminatedBuilder. That's substantially more code. The upside: the Pony version is bidirectional (encode is derived from the same definition), and the builder enforces no duplicate tags. But the setup cost is real.</p>
+<p class="comparison"><strong>Pony is more complex here.</strong> Elixir dispatches via function clause matching &mdash; three lines, each a tag pattern + body parse. The Pony version needs class definitions for each variant, Mapped wrappers with lambdas, widen calls, and either Alt or a DiscriminatedBuilder. That's substantially more code. The upside: the Pony version is bidirectional (encode is derived from the same definition), and the builder enforces no duplicate tags. But the setup cost is real.</p>
 </div>
 </section>
 
@@ -873,7 +873,7 @@ p code, li code {
   <span class="kw">let</span> tag: U8
   <span class="kw">let</span> value: Array[U8] val
 
-<span class="kw">let</span> tlv_entry = Iso[(U8, Array[U8] val), TlvEntry](
+<span class="kw">let</span> tlv_entry = Mapped[(U8, Array[U8] val), TlvEntry](
   Seq2(U8Codec, VariableSize[Array[U8] val](U8Codec, BytesRest)),
   {(t) => TlvEntry(t._1, t._2)},
   {(e) => (e.tag, e.value)})
@@ -883,7 +883,7 @@ p code, li code {
   <span class="kw">let</span> version: U8
   <span class="kw">let</span> entries: Array[TlvEntry] val
 
-<span class="kw">let</span> tlv_message = Iso[(U8, Array[TlvEntry] val), TlvMessage](
+<span class="kw">let</span> tlv_message = Mapped[(U8, Array[TlvEntry] val), TlvMessage](
   Seq2(U8Codec, Many[TlvEntry](tlv_entry)),
   {(t) => TlvMessage(t._1, t._2)},
   {(m) => (m.version, m.entries)})</pre>
@@ -970,14 +970,14 @@ p code, li code {
 <p>Fields whose values are derived from other fields during encoding (checksum = function of data, length = payload size) and validated during decoding.</p>
 
 <h3>How it works</h3>
-<p>This pattern uses <code>Iso</code> with a validating forward function and a computing reverse function. The checksum field is decoded as a plain integer; the Iso's forward function validates it against the data. The reverse function computes it from the domain value.</p>
+<p>This pattern uses <code>Mapped</code> with a validating forward function and a computing reverse function. The checksum field is decoded as a plain integer; the Mapped's forward function validates it against the data. The reverse function computes it from the domain value.</p>
 
 <pre><span class="comment">// A frame: U32 CRC followed by payload bytes</span>
 <span class="comment">// Domain type holds just the payload; CRC is computed</span>
 <span class="kw">class val</span> CheckedFrame
   <span class="kw">let</span> payload: Array[U8] val
 
-<span class="kw">let</span> checked_frame = Iso[(U32, Array[U8] val), CheckedFrame](
+<span class="kw">let</span> checked_frame = Mapped[(U32, Array[U8] val), CheckedFrame](
   Seq2(U32BE, BytesRest),
   {(t) =>
     <span class="comment">// Validate: compute CRC of payload, compare to field</span>
@@ -997,11 +997,11 @@ p code, li code {
 <span class="comment"># Encode: compute CRC, build binary</span>
 crc = :erlang.crc32(payload)
 &lt;&lt;crc::32-big, payload::binary&gt;&gt;</pre>
-<p class="comparison"><strong>Roughly comparable.</strong> Both require validation logic beyond simple pattern matching. Elixir uses pinned variables (<code>^crc</code>) or guard clauses; Pony uses a partial Iso forward function. The Pony version bundles the validation and computation into one codec definition; Elixir writes decode and encode as separate expressions that must stay consistent.</p>
+<p class="comparison"><strong>Roughly comparable.</strong> Both require validation logic beyond simple pattern matching. Elixir uses pinned variables (<code>^crc</code>) or guard clauses; Pony uses a partial Mapped forward function. The Pony version bundles the validation and computation into one codec definition; Elixir writes decode and encode as separate expressions that must stay consistent.</p>
 </div>
 
 <div class="note">
-<p>The forward function is partial (<code>?</code>) &mdash; a checksum mismatch produces a decode error. The Iso combinator would need to handle partial forward functions, surfacing the error as <code>MalformedData</code>. This is an extension to the basic Iso sketch.</p>
+<p>The forward function is partial (<code>?</code>) &mdash; a checksum mismatch produces a decode error. The Mapped combinator would need to handle partial forward functions, surfacing the error as <code>MalformedData</code>. This is an extension to the basic Mapped sketch.</p>
 </div>
 </section>
 
@@ -1036,11 +1036,11 @@ crc = :erlang.crc32(payload)
         <span class="kw">end</span>})
 
   <span class="kw">fun</span> pcap_header_be(): Codec[PcapHeader] =>
-    Iso[(U16, U16, U32, U32), PcapHeader](
+    Mapped[(U16, U16, U32, U32), PcapHeader](
       Seq4(U16BE, U16BE, U32BE, U32BE), ...)
 
   <span class="kw">fun</span> pcap_header_le(): Codec[PcapHeader] =>
-    Iso[(U16, U16, U32, U32), PcapHeader](
+    Mapped[(U16, U16, U32, U32), PcapHeader](
       Seq4(U16LE, U16LE, U32LE, U32LE), ...)</pre>
 
 <p>The endianness choice is explicit at each level &mdash; no global state or implicit threading. Each codec function picks BE or LE for its fields. This is verbose for all-same-endianness formats, but a factory function (like <code>pcap_header_be()</code> vs <code>pcap_header_le()</code>) keeps the repetition in one place.</p>

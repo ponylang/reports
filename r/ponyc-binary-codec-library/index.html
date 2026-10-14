@@ -310,7 +310,7 @@ a.type-link:hover { border-bottom-style: solid; }
 <section id="motivation">
   <h2>Motivation</h2>
   <p>Pony programs that speak binary protocols (TCP, UDP, file formats) need to decode incoming bytes and encode outgoing values. Without a library, every project writes its own ad-hoc parsing with manual offset arithmetic, byte-shifting, and error checking. This is repetitive, error-prone, and impossible to test in isolation.</p>
-  <p>The <code>binary_codec</code> package provides a composable, type-safe approach: small primitive codecs (<code>U16BE</code>, <code>BitsU8(4)</code>, <code>Bytes(16)</code>) compose into larger structures via combinators (<code>Seq4</code>, <code>Iso</code>, <code>FlatZip</code>, <code>Discriminated</code>). A single codec definition drives both directions, so parsing and serialization can't diverge.</p>
+  <p>The <code>binary_codec</code> package provides a composable, type-safe approach: small primitive codecs (<code>U16BE</code>, <code>BitsU8(4)</code>, <code>Bytes(16)</code>) compose into larger structures via combinators (<code>Seq4</code>, <code>Mapped</code>, <code>FlatZip</code>, <code>Discriminated</code>). A single codec definition drives both directions, so parsing and serialization can't diverge.</p>
   <p>The library is bit-native. Sub-byte fields (4-bit nibbles, 1-bit flags, 13-bit offsets) work the same way as byte-aligned fields. Errors are data: <code>InsufficientData</code> means "wait for more bytes," <code>MalformedData</code> means "this data is wrong." <code>FrameDecoder</code> uses this distinction to implement zero-copy TCP stream framing.</p>
 </section>
 
@@ -357,7 +357,7 @@ a.type-link:hover { border-bottom-style: solid; }
       <ul class="file-list">
         <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/seq.pony" target="_blank" rel="noopener">seq.pony</a> <span class="stat"><span class="stat-add">+281</span></span></li>
         <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/combinators.pony" target="_blank" rel="noopener">combinators.pony</a> <span class="stat"><span class="stat-add">+219</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/iso_codec.pony" target="_blank" rel="noopener">iso_codec.pony</a> <span class="stat"><span class="stat-add">+73</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/mapped_codec.pony" target="_blank" rel="noopener">mapped_codec.pony</a> <span class="stat"><span class="stat-add">+73</span></span></li>
         <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/discriminated.pony" target="_blank" rel="noopener">discriminated.pony</a> <span class="stat"><span class="stat-add">+120</span></span></li>
       </ul>
     </div>
@@ -857,7 +857,7 @@ a.type-link:hover { border-bottom-style: solid; }
       <span class="type-name">Seq6[A, B, C, D, E, F] is Codec[(A, B, C, D, E, F)]</span>
     </div>
     <div class="type-body">
-      <div class="type-doc">Sequence six codecs, producing a 6-tuple. Larger structures compose from smaller Seq groups via Iso.</div>
+      <div class="type-doc">Sequence six codecs, producing a 6-tuple. Larger structures compose from smaller Seq groups via Mapped.</div>
       <ul class="method-list">
         <li><span class="method-kind">new</span> val create(a: Codec[A], b: Codec[B], c: Codec[C], d: Codec[D], e: Codec[E], f: Codec[F])</li>
       </ul>
@@ -866,11 +866,11 @@ a.type-link:hover { border-bottom-style: solid; }
 
   <h3>Structural combinators</h3>
 
-  <div class="type-block" id="type-Iso">
+  <div class="type-block" id="type-Mapped">
     <div class="type-block-header">
       <span class="badge badge-added">New</span>
       <span class="type-kind">class val</span>
-      <span class="type-name">Iso[A, B] is Codec[B]</span>
+      <span class="type-name">Mapped[A, B] is Codec[B]</span>
     </div>
     <div class="type-body">
       <div class="type-doc">Bidirectional type mapping between a wire type <code>A</code> and a domain type <code>B</code>. The forward function may fail (partial) to signal malformed data.</div>
@@ -1117,7 +1117,7 @@ a.type-link:hover { border-bottom-style: solid; }
       <text x="170" y="202" text-anchor="middle" font-size="12">Seq2..6</text>
 
       <rect x="235" y="180" width="70" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
-      <text x="270" y="202" text-anchor="middle" font-size="12">Iso</text>
+      <text x="270" y="202" text-anchor="middle" font-size="12">Mapped</text>
 
       <rect x="320" y="180" width="90" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
       <text x="365" y="202" text-anchor="middle" font-size="12">FlatZip</text>
@@ -1175,7 +1175,7 @@ a.type-link:hover { border-bottom-style: solid; }
       <text x="370" y="410" text-anchor="middle" font-size="11" fill="var(--muted)">DecodeError (InsufficientData | MalformedData) &bull; EncodeError (EncodeViolation)</text>
     </svg>
   </div>
-  <p>Primitive codecs (<code>U16BE</code>, <code>BitsU8</code>, <code>Bytes</code>, etc.) implement the <code>Codec</code> trait directly. Combinators compose codecs: <code>Seq</code> for tuples, <code>Iso</code> for type mapping, <code>FlatZip</code> for dependent parsing, <code>Discriminated</code> for tagged unions, <code>Many</code>/<code>Count</code> for repetition. All combinators are themselves codecs, so they compose recursively.</p>
+  <p>Primitive codecs (<code>U16BE</code>, <code>BitsU8</code>, <code>Bytes</code>, etc.) implement the <code>Codec</code> trait directly. Combinators compose codecs: <code>Seq</code> for tuples, <code>Mapped</code> for type mapping, <code>FlatZip</code> for dependent parsing, <code>Discriminated</code> for tagged unions, <code>Many</code>/<code>Count</code> for repetition. All combinators are themselves codecs, so they compose recursively.</p>
   <p><code>FrameDecoder</code> wraps any composed codec for TCP streaming, using the <code>InsufficientData</code>/<code>MalformedData</code> distinction to separate "wait for more" from "corrupt data." It notifies the application through the <code>FrameNotify</code> interface.</p>
 </section>
 
@@ -1185,7 +1185,7 @@ a.type-link:hover { border-bottom-style: solid; }
     <h3 style="margin-top:0">Add binary_codec package</h3>
     <p>A new standard library package for bidirectional binary parsing. Define a <code>Codec[A]</code> once &mdash; the same definition decodes bytes into a value and encodes the value back to bytes.</p>
     <p>Sub-byte fields (4-bit nibbles, 1-bit flags, 13-bit offsets) work the same as byte-aligned fields. <code>decode</code> takes <code>Array[U8] val</code> so byte-slice codecs return zero-copy views via <code>Array.trim</code>.</p>
-    <p>Codecs are <code>val</code> and compose via combinators: <code>Seq2</code>&ndash;<code>Seq6</code> sequence fields into tuples, <code>Iso</code> maps between wire tuples and domain types, <code>FlatZip</code> threads a decoded value into a dependent codec, <code>Many</code> and <code>Count</code> handle repetition, and <code>Discriminated</code> dispatches on a tag value.</p>
+    <p>Codecs are <code>val</code> and compose via combinators: <code>Seq2</code>&ndash;<code>Seq6</code> sequence fields into tuples, <code>Mapped</code> maps between wire tuples and domain types, <code>FlatZip</code> threads a decoded value into a dependent codec, <code>Many</code> and <code>Count</code> handle repetition, and <code>Discriminated</code> dispatches on a tag value.</p>
     <p>Decode errors are data: <code>InsufficientData</code> means the input is incomplete, <code>MalformedData</code> means the data is structurally wrong. <code>FrameDecoder</code> wraps any codec for TCP stream framing and uses this distinction to separate &ldquo;not enough data yet&rdquo; from &ldquo;corrupt message.&rdquo;</p>
 <pre>use "binary_codec"
 
@@ -1201,7 +1201,7 @@ class val UdpHeader
 actor Main
   new create(env: Env) =>
     let codec: Codec[UdpHeader] =
-      Iso[(U16, U16, U16, U16), UdpHeader](
+      Mapped[(U16, U16, U16, U16), UdpHeader](
         Seq4[U16, U16, U16, U16](U16BE, U16BE, U16BE, U16BE),
         {(t) => UdpHeader(t._1, t._2, t._3, t._4)},
         {(h) => (h.src_port, h.dst_port, h.length, h.checksum)})
