@@ -227,6 +227,10 @@ h2 { font-size: 17px; font-weight: 600; margin-bottom: 16px; padding-bottom: 6px
   <h2>PR Overviews</h2>
   <ul class="report-list">
     <li>
+      <a href="ponyc-always-forward-slash/">ponyc #6276 — Always Forward Slash</a>
+      <div class="report-desc">Normalize all paths to use / on every platform including Windows. Changes span the C runtime, compiler, stdlib, and tools.</div>
+    </li>
+    <li>
       <a href="ponyc-backpressure-muting-cascade/">ponyc #6285 — Fix backpressure muting cascade</a>
       <div class="report-desc">Replace binary muting with graduated per-actor batch sizes. Runtime change across actor.c, actor.h, scheduler.c.</div>
     </li>

@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR #6276 Overview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #fafaf9;
+  --fg: #1c1917;
+  --muted: #78716c;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --border: #e7e5e4;
+  --code-bg: #f5f5f4;
+  --added-bg: #dcfce7;
+  --added-fg: #166534;
+  --removed-bg: #fee2e2;
+  --removed-fg: #991b1b;
+  --card-bg: #ffffff;
+  --nav-bg: #1c1917;
+  --nav-fg: #d6d3d1;
+  --nav-active: #60a5fa;
+  --diagram-node: #e0e7ff;
+  --diagram-edge: #6366f1;
+  --diagram-highlight: #f59e0b;
+  --warning-bg: #fef3c7;
+  --warning-fg: #92400e;
+  --warning-border: #f59e0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0a09;
+    --fg: #e7e5e4;
+    --muted: #a8a29e;
+    --accent: #60a5fa;
+    --accent-soft: #1e3a5f;
+    --border: #292524;
+    --code-bg: #1c1917;
+    --added-bg: #052e16;
+    --added-fg: #86efac;
+    --removed-bg: #450a0a;
+    --removed-fg: #fca5a5;
+    --card-bg: #1c1917;
+    --nav-bg: #0c0a09;
+    --nav-fg: #a8a29e;
+    --nav-active: #60a5fa;
+    --diagram-node: #312e81;
+    --diagram-edge: #818cf8;
+    --diagram-highlight: #fbbf24;
+    --warning-bg: #451a03;
+    --warning-fg: #fcd34d;
+    --warning-border: #b45309;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c0a09;
+  --fg: #e7e5e4;
+  --muted: #a8a29e;
+  --accent: #60a5fa;
+  --accent-soft: #1e3a5f;
+  --border: #292524;
+  --code-bg: #1c1917;
+  --added-bg: #052e16;
+  --added-fg: #86efac;
+  --removed-bg: #450a0a;
+  --removed-fg: #fca5a5;
+  --card-bg: #1c1917;
+  --nav-bg: #0c0a09;
+  --nav-fg: #a8a29e;
+  --nav-active: #60a5fa;
+  --diagram-node: #312e81;
+  --diagram-edge: #818cf8;
+  --diagram-highlight: #fbbf24;
+  --warning-bg: #451a03;
+  --warning-fg: #fcd34d;
+  --warning-border: #b45309;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100vh;
+  background: var(--nav-bg);
+  color: var(--nav-fg);
+  padding: 24px 0;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+nav .pr-label {
+  padding: 0 16px 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+nav .pr-title {
+  padding: 0 16px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.4;
+}
+
+nav ul { list-style: none; padding: 12px 0; margin: 0; flex: 1; }
+
+nav a {
+  display: block;
+  padding: 7px 16px 7px 20px;
+  color: var(--nav-fg);
+  text-decoration: none;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+nav a:hover { background: rgba(255,255,255,0.05); }
+
+nav a.active {
+  color: var(--nav-active);
+  background: rgba(96,165,250,0.08);
+}
+
+nav a.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 4px; bottom: 4px;
+  width: 3px;
+  background: var(--nav-active);
+  border-radius: 0 2px 2px 0;
+}
+
+nav .kbd-help {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+
+kbd {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+main {
+  margin-left: 220px;
+  padding: 32px 48px;
+  max-width: 860px;
+}
+
+section { margin-bottom: 48px; scroll-margin-top: 24px; }
+
+h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; text-wrap: balance; }
+h2 { font-size: 17px; font-weight: 600; margin-bottom: 16px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); display: inline-block; }
+h3 { font-size: 15px; font-weight: 600; margin: 20px 0 10px; }
+p { margin-bottom: 12px; }
+
+.summary-box {
+  background: var(--accent-soft);
+  border-left: 4px solid var(--accent);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  border-radius: 0 6px 6px 0;
+  font-size: 14px;
+}
+
+.warning-box {
+  background: var(--warning-bg);
+  border-left: 4px solid var(--warning-border);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  border-radius: 0 6px 6px 0;
+  font-size: 14px;
+  color: var(--warning-fg);
+}
+
+.warning-box strong { color: var(--warning-fg); }
+
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  font-size: 14px;
+}
+
+.panel-header:hover { background: rgba(0,0,0,0.02); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .panel-header:hover { background: rgba(255,255,255,0.03); }
+}
+:root[data-theme="dark"] .panel-header:hover { background: rgba(255,255,255,0.03); }
+
+.panel-header .arrow { transition: transform 0.2s; font-size: 10px; color: var(--muted); flex-shrink: 0; }
+.panel.open .arrow { transform: rotate(90deg); }
+
+.panel-body { display: none; padding: 0 14px 14px; border-top: 1px solid var(--border); }
+.panel.open .panel-body { display: block; padding-top: 14px; }
+
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.badge-removed { background: var(--removed-bg); color: var(--removed-fg); }
+.badge-added { background: var(--added-bg); color: var(--added-fg); }
+.badge-changed { background: var(--accent-soft); color: var(--accent); }
+
+.sig { font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-width: 0; }
+
+.before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.before-after > div { border-radius: 5px; overflow: hidden; min-width: 0; }
+.before-after label { display: block; padding: 3px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.before-after .before label { background: var(--removed-bg); color: var(--removed-fg); }
+.before-after .after label { background: var(--added-bg); color: var(--added-fg); }
+
+pre { background: var(--code-bg); padding: 10px 14px; border-radius: 5px; overflow-x: auto; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; }
+.before-after pre { border-radius: 0 0 5px 5px; margin: 0; }
+
+code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+
+.file-group-label { font-weight: 600; font-size: 13px; }
+.file-count { font-size: 12px; color: var(--muted); }
+.file-list { list-style: none; padding-left: 18px; }
+.file-list li { padding: 3px 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+.file-list a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+.file-list a:hover { color: var(--accent); text-decoration: underline; }
+.file-list .stat { font-size: 11px; margin-left: 6px; }
+.file-list .stat-add { color: var(--added-fg); }
+.file-list .stat-del { color: var(--removed-fg); }
+
+.stats { display: flex; gap: 16px; font-size: 13px; color: var(--muted); margin-bottom: 4px; flex-wrap: wrap; }
+
+.diagram-container { margin: 16px 0; padding: 20px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; overflow-x: auto; }
+.diagram-container svg { display: block; margin: 0 auto; }
+svg text { font-family: 'Inter', sans-serif; fill: var(--fg); }
+
+.type-block { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+.type-block-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.type-kind { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); flex-shrink: 0; }
+.type-name { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; min-width: 0; }
+.type-body { padding: 12px 14px; }
+.type-doc { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+.method-list { list-style: none; padding: 0; margin: 0; }
+.method-list li { padding: 6px 0; border-top: 1px solid var(--border); font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; }
+.method-list li:first-child { border-top: none; }
+.method-kind { color: var(--accent); font-weight: 600; font-size: 11px; }
+
+a.type-link { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+a.type-link:hover { border-bottom-style: solid; }
+
+.release-notes-content { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; font-size: 14px; line-height: 1.6; }
+.release-notes-content h3 { font-size: 15px; margin: 0 0 8px; }
+.release-notes-content p { margin-bottom: 8px; }
+.release-notes-content p:last-child { margin-bottom: 0; }
+.release-notes-content ul { margin: 8px 0 8px 20px; }
+.release-notes-content li { margin-bottom: 4px; }
+.release-notes-content + .release-notes-content { margin-top: 12px; }
+
+@media (max-width: 768px) {
+  nav { position: static; width: 100%; height: auto; padding: 12px 16px; }
+  nav ul { display: flex; flex-wrap: wrap; gap: 2px; padding: 8px 0; }
+  nav li { flex: none; }
+  nav a { padding: 5px 10px; font-size: 12px; border-radius: 4px; }
+  nav a.active::before { display: none; }
+  nav .kbd-help { display: none; }
+  main { margin-left: 0; padding: 16px; }
+  .before-after { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="pr-label">ponylang/ponyc</div>
+  <div class="pr-title">#6276 &mdash; Always Forward Slash</div>
+  <ul>
+    <li><a href="#summary" class="active">Summary</a></li>
+    <li><a href="#motivation">Motivation</a></li>
+    <li><a href="#files">File Map</a></li>
+    <li><a href="#behavior">Behavioral Changes</a></li>
+    <li><a href="#api">API Changes</a></li>
+    <li><a href="#surface">Public API Surface</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#release-notes">Release Notes</a></li>
+    <li><a href="#changelog">CHANGELOG</a></li>
+  </ul>
+  <div class="kbd-help">
+    <kbd>j</kbd> / <kbd>k</kbd> next / prev section<br>
+    <kbd>Enter</kbd> expand focused item<br>
+    <kbd>Esc</kbd> collapse all
+  </div>
+</nav>
+
+<main>
+
+<section id="summary">
+  <h1>Use forward slash as the path separator on all platforms</h1>
+  <div class="summary-box">
+    All paths in the <code>files</code> package and the compiler internals now use <code>/</code> as the separator on every platform, including Windows.
+  </div>
+  <div class="stats">
+    <span>23 files changed</span>
+    <span style="color:var(--added-fg)">+293</span>
+    <span style="color:var(--removed-fg)">&minus;306</span>
+  </div>
+</section>
+
+<section id="motivation">
+  <h2>Motivation</h2>
+  <p>Cross-platform path code required every layer to normalize separators independently. The C runtime, the compiler, the stdlib, and each tool all had their own <code>#ifdef</code> blocks choosing <code>\</code> on Windows and <code>/</code> elsewhere. Missing one meant backslashes leaking through on Windows, causing silent lookup failures when one layer stored a path with <code>\</code> and another searched for it with <code>/</code>.</p>
+  <p>This PR makes <code>/</code> the canonical separator everywhere: the C runtime normalizes at ingress, the compiler does the same, <code>Path.sep()</code> returns <code>"/"</code> unconditionally, and <code>Path.clean()</code> converts any remaining <code>\</code> on Windows.</p>
+</section>
+
+<section id="files">
+  <h2>File Map</h2>
+
+  <div class="panel open">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Stdlib: files package</span>
+      <span class="file-count">3 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/packages/files/path.pony" target="_blank" rel="noopener">packages/files/path.pony</a> <span class="stat"><span class="stat-add">+65</span> <span class="stat-del">&minus;51</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/packages/files/directory.pony" target="_blank" rel="noopener">packages/files/directory.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/packages/files/_non_root_test.pony" target="_blank" rel="noopener">packages/files/_non_root_test.pony</a> <span class="stat"><span class="stat-add">+102</span> <span class="stat-del">&minus;96</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">C runtime and compiler</span>
+      <span class="file-count">6 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/src/libponyc/platform/paths.c" target="_blank" rel="noopener">src/libponyc/platform/paths.c</a> <span class="stat"><span class="stat-add">+14</span> <span class="stat-del">&minus;6</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/src/libponyc/pkg/package.c" target="_blank" rel="noopener">src/libponyc/pkg/package.c</a> <span class="stat"><span class="stat-add">+7</span> <span class="stat-del">&minus;8</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/src/libponyc/codegen/gencshim.cc" target="_blank" rel="noopener">src/libponyc/codegen/gencshim.cc</a> <span class="stat"><span class="stat-add">+0</span> <span class="stat-del">&minus;4</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/src/libponyc/codegen/genexport.c" target="_blank" rel="noopener">src/libponyc/codegen/genexport.c</a> <span class="stat"><span class="stat-add">+0</span> <span class="stat-del">&minus;4</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/src/libponyrt/lang/paths.c" target="_blank" rel="noopener">src/libponyrt/lang/paths.c</a> <span class="stat"><span class="stat-add">+3</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/src/libponyrt/lang/directory.c" target="_blank" rel="noopener">src/libponyrt/lang/directory.c</a> <span class="stat"><span class="stat-add">+6</span> <span class="stat-del">&minus;0</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Tools</span>
+      <span class="file-count">8 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/tools/pony-lsp/uris.pony" target="_blank" rel="noopener">tools/pony-lsp/uris.pony</a> <span class="stat"><span class="stat-add">+18</span> <span class="stat-del">&minus;23</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/tools/pony-lsp/corral.pony" target="_blank" rel="noopener">tools/pony-lsp/corral.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/tools/pony-lint/ignore_matcher.pony" target="_blank" rel="noopener">tools/pony-lint/ignore_matcher.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;10</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/tools/pony-doc/path_sanitize.pony" target="_blank" rel="noopener">tools/pony-doc/path_sanitize.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;11</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/tools/pony-doc/tqfn.pony" target="_blank" rel="noopener">tools/pony-doc/tqfn.pony</a> <span class="stat"><span class="stat-add">+4</span> <span class="stat-del">&minus;13</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/tools/pony-dep/archive_encoder.pony" target="_blank" rel="noopener">tools/pony-dep/archive_encoder.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;5</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/tools/pony-dep/content_hash.pony" target="_blank" rel="noopener">tools/pony-dep/content_hash.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;6</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/tools/pony-dep/pack.pony" target="_blank" rel="noopener">tools/pony-dep/pack.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;5</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Tests</span>
+      <span class="file-count">4 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/packages/files/_non_root_test.pony" target="_blank" rel="noopener">packages/files/_non_root_test.pony</a> <span class="stat"><span class="stat-add">+102</span> <span class="stat-del">&minus;96</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/tools/pony-lsp/test/_uris_tests.pony" target="_blank" rel="noopener">tools/pony-lsp/test/_uris_tests.pony</a> <span class="stat"><span class="stat-add">+22</span> <span class="stat-del">&minus;28</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/tools/pony-lsp/test/message_handler.pony" target="_blank" rel="noopener">tools/pony-lsp/test/message_handler.pony</a> <span class="stat"><span class="stat-add">+6</span> <span class="stat-del">&minus;26</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/tools/pony-lsp/test/_client_spelling.pony" target="_blank" rel="noopener">tools/pony-lsp/test/_client_spelling.pony</a> <span class="stat"><span class="stat-add">+0</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/test/libponyc/program.cc" target="_blank" rel="noopener">test/libponyc/program.cc</a> <span class="stat"><span class="stat-add">+0</span> <span class="stat-del">&minus;4</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Release notes and CHANGELOG</span>
+      <span class="file-count">2 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/.release-notes/next-release.md" target="_blank" rel="noopener">.release-notes/next-release.md</a> <span class="stat"><span class="stat-add">+34</span> <span class="stat-del">&minus;0</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/4da530de8/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG.md</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;0</span></span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="behavior">
+  <h2>Behavioral Changes</h2>
+
+  <h3>Paths are <code>/</code>-separated on all platforms</h3>
+  <p><code>Path.sep()</code> returns <code>"/"</code> on Windows (previously <code>"\\"</code>). <code>Path.cwd()</code>, <code>Path.canonical()</code>, <code>Path.join()</code>, <code>Path.clean()</code>, and all other path operations produce <code>/</code>-separated paths. Windows code that compared paths against string literals with <code>\</code> will stop matching.</p>
+
+  <h3><code>Path.normcase()</code> only lowercases</h3>
+  <p>On Windows, <code>normcase()</code> previously replaced <code>/</code> with <code>\</code> and lowercased the path. It now only lowercases.</p>
+
+  <h3><code>Path.from_slash()</code> and <code>Path.to_slash()</code> removed</h3>
+  <p>These functions served no purpose when all paths are already <code>/</code>-separated. Any code calling them will fail to compile.</p>
+
+  <h3><code>Path.to_os()</code> added</h3>
+  <p>Converts <code>/</code> to <code>\</code> on Windows. Returns the path unchanged on other platforms.</p>
+
+  <div class="warning-box">
+    <strong>Windows <code>cmd.exe</code> footgun:</strong> <code>cmd.exe</code> interprets <code>/</code> as an option flag, not a path separator. Code that passes paths to <code>cmd.exe</code> or <code>.bat</code> files must wrap them with <code>Path.to_os()</code> to convert back to <code>\</code>. Win32 API calls accept <code>/</code> without issue &mdash; the footgun is specifically at the shell boundary.
+  </div>
+
+  <h3><code>dir()</code>, <code>base()</code>, <code>ext()</code>, <code>split()</code> handle both separators on Windows</h3>
+  <p>These functions now use an internal <code>_rfind_sep</code> helper that finds both <code>/</code> and <code>\</code> on Windows. Paths from external sources (e.g. <code>__loc.file()</code>) that still contain <code>\</code> are handled correctly without requiring a prior <code>clean()</code>.</p>
+</section>
+
+<section id="api">
+  <h2>API Changes</h2>
+
+  <div class="panel open">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="badge badge-changed">Changed</span>
+      <span class="sig">Path.sep() &mdash; now returns "/" on all platforms</span>
+    </div>
+    <div class="panel-body">
+      <div class="before-after">
+        <div class="before"><label>Before</label><pre>fun tag sep(): String =>
+  ifdef windows then "\\" else "/" end</pre></div>
+        <div class="after"><label>After</label><pre>fun tag sep(): String =>
+  "/"</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel open">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="badge badge-changed">Changed</span>
+      <span class="sig">Path.normcase() &mdash; no longer replaces / with \</span>
+    </div>
+    <div class="panel-body">
+      <div class="before-after">
+        <div class="before"><label>Before</label><pre>fun normcase(path: String): String =>
+  if Platform.windows() or Platform.osx() then
+    var p = path.lower()
+    ifdef windows then
+      p = Path.from_slash(p)
+    end
+    p
+  else
+    path
+  end</pre></div>
+        <div class="after"><label>After</label><pre>fun normcase(path: String): String =>
+  if Platform.windows() or Platform.osx() then
+    path.lower()
+  else
+    path
+  end</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel open">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="badge badge-removed">Removed</span>
+      <span class="sig">Path.from_slash() and Path.to_slash()</span>
+    </div>
+    <div class="panel-body">
+      <div class="before-after">
+        <div class="before"><label>Before</label><pre>fun from_slash(path: String): String =>
+  ifdef windows then
+    path.clone() .> replace("/", "\\")
+  else
+    path
+  end
+
+fun to_slash(path: String): String =>
+  ifdef windows then
+    path.clone() .> replace("\\", "/")
+  else
+    path
+  end</pre></div>
+        <div class="after"><label>After</label><pre>// Removed. Delete any calls to these functions.</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel open">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="badge badge-added">Added</span>
+      <span class="sig">Path.to_os() &mdash; convert to OS-native separators</span>
+    </div>
+    <div class="panel-body">
+      <div class="before-after">
+        <div class="before"><label>Before</label><pre>// No equivalent. Code that needed backslash paths
+// on Windows used Path.from_slash().</pre></div>
+        <div class="after"><label>After</label><pre>fun to_os(path: String): String =>
+  ifdef windows then
+    // replaces '/' with '\\' byte by byte
+    let s = path.clone()
+    // ...
+    s
+  else
+    path
+  end</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="badge badge-changed">Changed</span>
+      <span class="sig">Path.split() &mdash; now finds both separators on Windows</span>
+    </div>
+    <div class="panel-body">
+      <div class="before-after">
+        <div class="before"><label>Before</label><pre>fun split(path: String,
+  separator: String = Path.sep()
+): (String, String) =>
+  try
+    let i = path.rfind(separator)?.usize()
+    (clean(path.trim(0, i)),
+     path.trim(i + 1))
+  else
+    ("", path)
+  end</pre></div>
+        <div class="after"><label>After</label><pre>fun split(path: String,
+  separator: String = Path.sep()
+): (String, String) =>
+  try
+    let i = _rfind_sep(path)?.usize()
+    (clean(path.trim(0, i)),
+     path.trim(i + 1))
+  else
+    ("", path)
+  end</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="surface">
+  <h2>Public API Surface</h2>
+
+  <div class="type-block" id="type-Path">
+    <div class="type-block-header">
+      <span class="badge badge-changed">Changed</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">Path</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Operations on paths that do not require a capability. All paths use <code>/</code> as the separator on every platform.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">fun</span> is_sep(c: U8): Bool</li>
+        <li><span class="method-kind">fun tag</span> sep(): String</li>
+        <li><span class="method-kind">fun</span> is_abs(path: String): Bool</li>
+        <li><span class="method-kind">fun</span> join(path: String, next_path: String): String</li>
+        <li><span class="method-kind">fun</span> clean(path: String): String</li>
+        <li><span class="method-kind">fun</span> normcase(path: String): String</li>
+        <li><span class="method-kind">fun</span> cwd(): String</li>
+        <li><span class="method-kind">fun</span> abs(path: String): String</li>
+        <li><span class="method-kind">fun</span> rel(to: String, target: String): String ?</li>
+        <li><span class="method-kind">fun</span> split(path: String, separator: String = Path.sep()): (String, String)</li>
+        <li><span class="method-kind">fun</span> base(path: String, with_ext: Bool = true): String</li>
+        <li><span class="method-kind">fun</span> dir(path: String): String</li>
+        <li><span class="method-kind">fun</span> ext(path: String): String</li>
+        <li><span class="method-kind">fun</span> volume(path: String): String</li>
+        <li><span class="method-kind">fun</span> to_os(path: String): String</li>
+        <li><span class="method-kind">fun</span> canonical(path: String): String ?</li>
+        <li><span class="method-kind">fun</span> is_list_sep(c: U8): Bool</li>
+        <li><span class="method-kind">fun</span> list_sep(): String</li>
+        <li><span class="method-kind">fun</span> split_list(path: String): Array[String] iso^</li>
+        <li><span class="method-kind">fun</span> random(len: USize = 6): String</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="architecture">
+  <h2>Architecture</h2>
+  <p>The change normalizes paths at four ingress points. Everything downstream receives <code>/</code>-separated paths without needing its own normalization.</p>
+  <div class="diagram-container">
+    <svg width="100%" viewBox="0 0 700 480" style="max-width:700px">
+      <defs>
+        <marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-edge)"/>
+        </marker>
+      </defs>
+
+      <text x="350" y="24" text-anchor="middle" font-size="14" font-weight="600">Normalization Points</text>
+
+      <!-- Row 1: OS APIs -->
+      <rect x="30" y="50" width="160" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="110" y="76" text-anchor="middle" font-size="12">GetFullPathName</text>
+
+      <rect x="210" y="50" width="160" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="290" y="76" text-anchor="middle" font-size="12">GetModuleFileName</text>
+
+      <rect x="390" y="50" width="140" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="460" y="76" text-anchor="middle" font-size="12">getcwd (Win32)</text>
+
+      <text x="590" y="76" text-anchor="middle" font-size="11" fill="var(--muted)">return \ paths</text>
+
+      <!-- Arrows down to normalization -->
+      <line x1="110" y1="94" x2="110" y2="140" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <line x1="290" y1="94" x2="290" y2="140" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <line x1="460" y1="94" x2="460" y2="140" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+
+      <!-- Row 2: Normalization layer -->
+      <rect x="30" y="144" width="160" height="44" rx="6" fill="var(--diagram-highlight)" stroke="var(--diagram-edge)" stroke-width="2"/>
+      <text x="110" y="163" text-anchor="middle" font-size="12" font-weight="600">pony_realpath</text>
+      <text x="110" y="178" text-anchor="middle" font-size="10">\ → /</text>
+
+      <rect x="210" y="144" width="160" height="44" rx="6" fill="var(--diagram-highlight)" stroke="var(--diagram-edge)" stroke-width="2"/>
+      <text x="290" y="163" text-anchor="middle" font-size="12" font-weight="600">get_compiler_exe_path</text>
+      <text x="290" y="178" text-anchor="middle" font-size="10">\ → /</text>
+
+      <rect x="390" y="144" width="140" height="44" rx="6" fill="var(--diagram-highlight)" stroke="var(--diagram-edge)" stroke-width="2"/>
+      <text x="460" y="163" text-anchor="middle" font-size="12" font-weight="600">pony_os_cwd</text>
+      <text x="460" y="178" text-anchor="middle" font-size="10">\ → /</text>
+
+      <!-- Arrows down -->
+      <line x1="110" y1="188" x2="110" y2="234" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <line x1="290" y1="188" x2="290" y2="234" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <line x1="460" y1="188" x2="350" y2="234" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+
+      <!-- Row 3: Consumers -->
+      <rect x="30" y="238" width="160" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="110" y="264" text-anchor="middle" font-size="12">Compiler (package.c)</text>
+
+      <rect x="210" y="238" width="160" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="290" y="264" text-anchor="middle" font-size="12">Compiler (codegen)</text>
+
+      <rect x="390" y="238" width="160" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="470" y="264" text-anchor="middle" font-size="12">Stdlib (Path.*)</text>
+
+      <!-- Dashed divider -->
+      <line x1="30" y1="310" x2="670" y2="310" stroke="var(--diagram-edge)" stroke-width="1" stroke-dasharray="6,4"/>
+
+      <!-- Row 4: PATH_SLASH macro -->
+      <text x="350" y="340" text-anchor="middle" font-size="14" font-weight="600">PATH_SLASH Macro (all files)</text>
+
+      <rect x="70" y="360" width="240" height="44" rx="6" fill="var(--removed-bg)" stroke="var(--removed-fg)" stroke-width="1.5"/>
+      <text x="190" y="378" text-anchor="middle" font-size="12" fill="var(--removed-fg)">Before: ifdef → '\' or '/'</text>
+      <text x="190" y="394" text-anchor="middle" font-size="11" fill="var(--removed-fg)">4 separate #ifdef blocks</text>
+
+      <text x="350" y="386" text-anchor="middle" font-size="16" font-weight="600">→</text>
+
+      <rect x="390" y="360" width="240" height="44" rx="6" fill="var(--added-bg)" stroke="var(--added-fg)" stroke-width="1.5"/>
+      <text x="510" y="378" text-anchor="middle" font-size="12" fill="var(--added-fg)">After: unconditional '/'</text>
+      <text x="510" y="394" text-anchor="middle" font-size="11" fill="var(--added-fg)">no #ifdef needed</text>
+
+      <!-- Row 5: Escape hatch -->
+      <line x1="30" y1="430" x2="670" y2="430" stroke="var(--diagram-edge)" stroke-width="1" stroke-dasharray="6,4"/>
+      <text x="350" y="458" text-anchor="middle" font-size="14" font-weight="600">Escape hatch: Path.to_os()</text>
+      <text x="350" y="476" text-anchor="middle" font-size="12" fill="var(--muted)">Converts / → \ when passing paths to cmd.exe or .bat files</text>
+    </svg>
+  </div>
+</section>
+
+<section id="release-notes">
+  <h2>Release Notes</h2>
+
+  <div class="release-notes-content">
+    <h3>Use forward slash as the path separator on all platforms</h3>
+    <p>All paths in the <code>files</code> package now use <code>/</code> as the separator on every platform, including Windows. Paths from <code>Path.cwd()</code> and <code>Path.canonical()</code> are <code>/</code>-separated, <code>Path.sep()</code> returns <code>"/"</code> unconditionally, and <code>Path.clean()</code> converts <code>\</code> to <code>/</code> on Windows.</p>
+    <p><code>Path.is_sep()</code> still accepts <code>\</code> on Windows for parsing external input. Use <code>Path.to_os()</code> when a backslash path is needed for Windows shell commands.</p>
+    <p><code>Path.normcase()</code> now only lowercases the path on case-insensitive platforms. It no longer replaces <code>/</code> with <code>\</code> on Windows.</p>
+    <p>Before:</p>
+    <pre>if path == "C:\\Users\\me\\project" then
+  // ...
+end</pre>
+    <p>After:</p>
+    <pre>if path == "C:/Users/me/project" then
+  // ...
+end</pre>
+    <p>Code that passes paths to Windows shell commands should use <code>Path.to_os()</code>:</p>
+    <pre>let os_path = Path.to_os(path)</pre>
+  </div>
+
+  <div class="release-notes-content">
+    <h3>Remove Path.from_slash and Path.to_slash</h3>
+    <p><code>Path.from_slash()</code> and <code>Path.to_slash()</code> have been removed. All paths use <code>/</code> as the separator on every platform, so these functions served no purpose. Remove any calls to them.</p>
+  </div>
+</section>
+
+<section id="changelog">
+  <h2>CHANGELOG</h2>
+  <div class="release-notes-content">
+    <h3>Changed</h3>
+    <ul>
+      <li>Use forward slash as the path separator on all platforms (<a href="https://github.com/ponylang/ponyc/pull/6276" target="_blank" rel="noopener">PR #6276</a>)</li>
+      <li>Remove Path.from_slash and Path.to_slash (<a href="https://github.com/ponylang/ponyc/pull/6276" target="_blank" rel="noopener">PR #6276</a>)</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<script>
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('nav a[href^="#"]');
+let currentSection = 0;
+
+function updateActiveNav() {
+  navLinks.forEach(a => a.classList.remove('active'));
+  const id = sections[currentSection]?.id;
+  if (id) {
+    const link = document.querySelector('nav a[href="#' + id + '"]');
+    if (link) link.classList.add('active');
+  }
+}
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = Array.from(sections).indexOf(entry.target);
+      if (idx >= 0) { currentSection = idx; updateActiveNav(); }
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+
+sections.forEach(s => observer.observe(s));
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'j' || e.key === 'J') {
+    e.preventDefault();
+    currentSection = Math.min(currentSection + 1, sections.length - 1);
+    sections[currentSection].scrollIntoView({ behavior: 'smooth' });
+    updateActiveNav();
+  } else if (e.key === 'k' || e.key === 'K') {
+    e.preventDefault();
+    currentSection = Math.max(currentSection - 1, 0);
+    sections[currentSection].scrollIntoView({ behavior: 'smooth' });
+    updateActiveNav();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    sections[currentSection].querySelectorAll('.panel:not(.open)').forEach(el => el.classList.add('open'));
+  } else if (e.key === 'Escape') {
+    document.querySelectorAll('.panel.open').forEach(el => el.classList.remove('open'));
+  }
+});
+
+navLinks.forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+      const idx = Array.from(sections).indexOf(target);
+      if (idx >= 0) { currentSection = idx; updateActiveNav(); }
+    }
+  });
+});
+
+(function() {
+  const typeIndex = new Map();
+  document.querySelectorAll('.type-block[id]').forEach(block => {
+    const nameEl = block.querySelector('.type-name');
+    if (!nameEl) return;
+    const raw = nameEl.textContent.trim();
+    const bare = raw.replace(/\[.*/, '').replace(/\s+is\s+.*/, '').replace(/.*\./, '');
+    if (bare) typeIndex.set(bare, block.id);
+  });
+  if (typeIndex.size === 0) return;
+
+  const names = Array.from(typeIndex.keys()).sort((a, b) => b.length - a.length);
+  const pattern = new RegExp('\\b(' + names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'g');
+
+  function walk(node) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const tag = node.tagName;
+      if (tag === 'A' || tag === 'PRE' || tag === 'CODE' || tag === 'svg' || tag === 'SCRIPT' || tag === 'STYLE') return;
+      if (node.classList.contains('type-name')) return;
+      Array.from(node.childNodes).forEach(walk);
+    } else if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent;
+      if (!pattern.test(text)) return;
+      pattern.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      let m;
+      while ((m = pattern.exec(text)) !== null) {
+        const typeName = m[1];
+        const anchor = typeIndex.get(typeName);
+        const ownerBlock = node.parentElement?.closest('.type-block');
+        if (ownerBlock && ownerBlock.id === anchor) continue;
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const a = document.createElement('a');
+        a.className = 'type-link';
+        a.href = '#' + anchor;
+        a.textContent = typeName;
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' });
+        });
+        frag.appendChild(a);
+        last = m.index + typeName.length;
+      }
+      if (last === 0) return;
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    }
+  }
+  walk(document.querySelector('main'));
+})();
+</script>
+
+</body>
+</html>
