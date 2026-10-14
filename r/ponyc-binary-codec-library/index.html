@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR #6284 Overview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #fafaf9;
+  --fg: #1c1917;
+  --muted: #78716c;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --border: #e7e5e4;
+  --code-bg: #f5f5f4;
+  --added-bg: #dcfce7;
+  --added-fg: #166534;
+  --removed-bg: #fee2e2;
+  --removed-fg: #991b1b;
+  --card-bg: #ffffff;
+  --nav-bg: #1c1917;
+  --nav-fg: #d6d3d1;
+  --nav-active: #60a5fa;
+  --diagram-node: #e0e7ff;
+  --diagram-edge: #6366f1;
+  --diagram-highlight: #f59e0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0a09;
+    --fg: #e7e5e4;
+    --muted: #a8a29e;
+    --accent: #60a5fa;
+    --accent-soft: #1e3a5f;
+    --border: #292524;
+    --code-bg: #1c1917;
+    --added-bg: #052e16;
+    --added-fg: #86efac;
+    --removed-bg: #450a0a;
+    --removed-fg: #fca5a5;
+    --card-bg: #1c1917;
+    --nav-bg: #0c0a09;
+    --nav-fg: #a8a29e;
+    --nav-active: #60a5fa;
+    --diagram-node: #312e81;
+    --diagram-edge: #818cf8;
+    --diagram-highlight: #fbbf24;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c0a09;
+  --fg: #e7e5e4;
+  --muted: #a8a29e;
+  --accent: #60a5fa;
+  --accent-soft: #1e3a5f;
+  --border: #292524;
+  --code-bg: #1c1917;
+  --added-bg: #052e16;
+  --added-fg: #86efac;
+  --removed-bg: #450a0a;
+  --removed-fg: #fca5a5;
+  --card-bg: #1c1917;
+  --nav-bg: #0c0a09;
+  --nav-fg: #a8a29e;
+  --nav-active: #60a5fa;
+  --diagram-node: #312e81;
+  --diagram-edge: #818cf8;
+  --diagram-highlight: #fbbf24;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100vh;
+  background: var(--nav-bg);
+  color: var(--nav-fg);
+  padding: 24px 0;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+nav .pr-label {
+  padding: 0 16px 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+nav .pr-title {
+  padding: 0 16px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.4;
+}
+
+nav ul { list-style: none; padding: 12px 0; margin: 0; flex: 1; }
+
+nav a {
+  display: block;
+  padding: 7px 16px 7px 20px;
+  color: var(--nav-fg);
+  text-decoration: none;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+nav a:hover { background: rgba(255,255,255,0.05); }
+
+nav a.active {
+  color: var(--nav-active);
+  background: rgba(96,165,250,0.08);
+}
+
+nav a.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 4px; bottom: 4px;
+  width: 3px;
+  background: var(--nav-active);
+  border-radius: 0 2px 2px 0;
+}
+
+nav .kbd-help {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+
+kbd {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+main {
+  margin-left: 220px;
+  padding: 32px 48px;
+  max-width: 860px;
+}
+
+section { margin-bottom: 48px; scroll-margin-top: 24px; }
+
+h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; text-wrap: balance; }
+h2 { font-size: 17px; font-weight: 600; margin-bottom: 16px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); display: inline-block; }
+h3 { font-size: 15px; font-weight: 600; margin: 20px 0 10px; }
+p { margin-bottom: 12px; }
+
+.summary-box {
+  background: var(--accent-soft);
+  border-left: 4px solid var(--accent);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  border-radius: 0 6px 6px 0;
+  font-size: 14px;
+}
+
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  font-size: 14px;
+}
+
+.panel-header:hover { background: rgba(0,0,0,0.02); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .panel-header:hover { background: rgba(255,255,255,0.03); }
+}
+:root[data-theme="dark"] .panel-header:hover { background: rgba(255,255,255,0.03); }
+
+.panel-header .arrow { transition: transform 0.2s; font-size: 10px; color: var(--muted); flex-shrink: 0; }
+.panel.open .arrow { transform: rotate(90deg); }
+
+.panel-body { display: none; padding: 0 14px 14px; border-top: 1px solid var(--border); }
+.panel.open .panel-body { display: block; padding-top: 14px; }
+
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.badge-removed { background: var(--removed-bg); color: var(--removed-fg); }
+.badge-added { background: var(--added-bg); color: var(--added-fg); }
+.badge-changed { background: var(--accent-soft); color: var(--accent); }
+
+.sig { font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-width: 0; }
+
+pre { background: var(--code-bg); padding: 10px 14px; border-radius: 5px; overflow-x: auto; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; }
+
+code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+
+.file-group-label { font-weight: 600; font-size: 13px; }
+.file-count { font-size: 12px; color: var(--muted); }
+.file-list { list-style: none; padding-left: 18px; }
+.file-list li { padding: 3px 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+.file-list a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+.file-list a:hover { color: var(--accent); text-decoration: underline; }
+.file-list .stat { font-size: 11px; margin-left: 6px; }
+.file-list .stat-add { color: var(--added-fg); }
+
+.stats { display: flex; gap: 16px; font-size: 13px; color: var(--muted); margin-bottom: 4px; flex-wrap: wrap; }
+
+.diagram-container { margin: 16px 0; padding: 20px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; overflow-x: auto; }
+.diagram-container svg { display: block; margin: 0 auto; }
+svg text { font-family: 'Inter', sans-serif; fill: var(--fg); }
+
+.type-block { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+.type-block-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.type-kind { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); flex-shrink: 0; }
+.type-name { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; min-width: 0; }
+.type-body { padding: 12px 14px; }
+.type-doc { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+.method-list { list-style: none; padding: 0; margin: 0; }
+.method-list li { padding: 6px 0; border-top: 1px solid var(--border); font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; }
+.method-list li:first-child { border-top: none; }
+.method-kind { color: var(--accent); font-weight: 600; font-size: 11px; }
+
+a.type-link { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+a.type-link:hover { border-bottom-style: solid; }
+
+@media (max-width: 768px) {
+  nav { position: static; width: 100%; height: auto; padding: 12px 16px; }
+  nav ul { display: flex; flex-wrap: wrap; gap: 2px; padding: 8px 0; }
+  nav li { flex: none; }
+  nav a { padding: 5px 10px; font-size: 12px; border-radius: 4px; }
+  nav a.active::before { display: none; }
+  nav .kbd-help { display: none; }
+  main { margin-left: 0; padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="pr-label">ponylang/ponyc</div>
+  <div class="pr-title">#6284 &mdash; Add binary_codec package</div>
+  <ul>
+    <li><a href="#summary" class="active">Summary</a></li>
+    <li><a href="#motivation">Motivation</a></li>
+    <li><a href="#files">File Map</a></li>
+    <li><a href="#surface">Public API Surface</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+  </ul>
+  <div class="kbd-help">
+    <kbd>j</kbd> / <kbd>k</kbd> next / prev section<br>
+    <kbd>Enter</kbd> expand focused item<br>
+    <kbd>Esc</kbd> collapse all
+  </div>
+</nav>
+
+<main>
+
+<section id="summary">
+  <h1>Add binary_codec package</h1>
+  <div class="summary-box">
+    A combinator library for bidirectional binary parsing and building. Define a <code>Codec[A]</code> once and it handles both decoding bytes into <code>A</code> and encoding <code>A</code> back to bytes.
+  </div>
+  <div class="stats">
+    <span>15 files changed</span>
+    <span style="color:var(--added-fg)">+2,606</span>
+  </div>
+</section>
+
+<section id="motivation">
+  <h2>Motivation</h2>
+  <p>Pony programs that speak binary protocols (TCP, UDP, file formats) need to decode incoming bytes and encode outgoing values. Without a library, every project writes its own ad-hoc parsing with manual offset arithmetic, byte-shifting, and error checking. This is repetitive, error-prone, and impossible to test in isolation.</p>
+  <p>The <code>binary_codec</code> package provides a composable, type-safe approach: small primitive codecs (<code>U16BE</code>, <code>BitsU8(4)</code>, <code>Bytes(16)</code>) compose into larger structures via combinators (<code>Seq4</code>, <code>Iso</code>, <code>FlatZip</code>, <code>Discriminated</code>). A single codec definition drives both directions, so parsing and serialization can't diverge.</p>
+  <p>The library is bit-native. Sub-byte fields (4-bit nibbles, 1-bit flags, 13-bit offsets) work the same way as byte-aligned fields. Errors are data: <code>InsufficientData</code> means "wait for more bytes," <code>MalformedData</code> means "this data is wrong." <code>FrameDecoder</code> uses this distinction to implement zero-copy TCP stream framing.</p>
+</section>
+
+<section id="files">
+  <h2>File Map</h2>
+
+  <div class="panel open">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Core types</span>
+      <span class="file-count">3 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/codec.pony" target="_blank" rel="noopener">codec.pony</a> <span class="stat"><span class="stat-add">+90</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/binary_codec.pony" target="_blank" rel="noopener">binary_codec.pony</a> <span class="stat"><span class="stat-add">+60</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/frame_notify.pony" target="_blank" rel="noopener">frame_notify.pony</a> <span class="stat"><span class="stat-add">+15</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Primitive codecs</span>
+      <span class="file-count">3 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/primitives.pony" target="_blank" rel="noopener">primitives.pony</a> <span class="stat"><span class="stat-add">+408</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/bits.pony" target="_blank" rel="noopener">bits.pony</a> <span class="stat"><span class="stat-add">+131</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/bytes.pony" target="_blank" rel="noopener">bytes.pony</a> <span class="stat"><span class="stat-add">+119</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Combinators</span>
+      <span class="file-count">4 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/seq.pony" target="_blank" rel="noopener">seq.pony</a> <span class="stat"><span class="stat-add">+281</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/combinators.pony" target="_blank" rel="noopener">combinators.pony</a> <span class="stat"><span class="stat-add">+219</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/iso_codec.pony" target="_blank" rel="noopener">iso_codec.pony</a> <span class="stat"><span class="stat-add">+73</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/discriminated.pony" target="_blank" rel="noopener">discriminated.pony</a> <span class="stat"><span class="stat-add">+120</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Repetition &amp; framing</span>
+      <span class="file-count">2 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/repetition.pony" target="_blank" rel="noopener">repetition.pony</a> <span class="stat"><span class="stat-add">+101</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/frame_decoder.pony" target="_blank" rel="noopener">frame_decoder.pony</a> <span class="stat"><span class="stat-add">+49</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Internal &amp; tests</span>
+      <span class="file-count">3 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/_test.pony" target="_blank" rel="noopener">_test.pony</a> <span class="stat"><span class="stat-add">+793</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/_bit_cursor.pony" target="_blank" rel="noopener">_bit_cursor.pony</a> <span class="stat"><span class="stat-add">+78</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/dabf78ae6/packages/binary_codec/_bit_writer.pony" target="_blank" rel="noopener">_bit_writer.pony</a> <span class="stat"><span class="stat-add">+69</span></span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="surface">
+  <h2>Public API Surface</h2>
+
+  <h3>Core trait and error types</h3>
+
+  <div class="type-block" id="type-Codec">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">trait val</span>
+      <span class="type-name">Codec[A: Any val]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">A bidirectional codec that decodes bytes into a value and encodes a value into bytes. Codecs are <code>val</code> &mdash; immutable and shareable across actors. The bit offset lets sub-byte fields compose naturally.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">fun</span> decode(data: Array[U8] val, offset: USize): ((A, USize) | DecodeError)</li>
+        <li><span class="method-kind">fun</span> encode(value: A): (Array[U8] val | EncodeError)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-InsufficientData">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">InsufficientData</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Returned when decode needs more bytes than are available. In streaming, this means "wait for more data."</div>
+      <ul class="method-list">
+        <li><span class="method-kind">fun</span> string(): String iso^</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-MalformedData">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">MalformedData</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Returned when decode encounters structurally invalid data &mdash; a literal mismatch, an unknown tag, a constraint violation. No additional data will fix it.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(message': String, bit_offset': USize = 0)</li>
+        <li><span class="method-kind">fun</span> message(): String</li>
+        <li><span class="method-kind">fun</span> bit_offset(): USize</li>
+        <li><span class="method-kind">fun</span> string(): String iso^</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-DecodeError">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">type</span>
+      <span class="type-name">DecodeError is (InsufficientData | MalformedData)</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">The error union returned by <code>decode</code>.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-EncodeViolation">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">EncodeViolation</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Returned when encode fails &mdash; a value doesn't fit the codec's constraints or the output isn't byte-aligned.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(message': String)</li>
+        <li><span class="method-kind">fun</span> message(): String</li>
+        <li><span class="method-kind">fun</span> string(): String iso^</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-EncodeError">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">type</span>
+      <span class="type-name">EncodeError is EncodeViolation</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">The error type returned by <code>encode</code>.</div>
+    </div>
+  </div>
+
+  <h3>Byte-aligned primitives</h3>
+
+  <div class="type-block" id="type-U8Codec">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">U8Codec is Codec[U8]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read or write a single unsigned byte (8 bits).</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-I8Codec">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">I8Codec is Codec[I8]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read or write a signed byte (8 bits).</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-BoolBit">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">BoolBit is Codec[Bool]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read or write a single bit as a <code>Bool</code>.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-U16BE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">U16BE is Codec[U16]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">16-bit unsigned integer, big-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-U16LE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">U16LE is Codec[U16]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">16-bit unsigned integer, little-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-I16BE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">I16BE is Codec[I16]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">16-bit signed integer, big-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-I16LE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">I16LE is Codec[I16]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">16-bit signed integer, little-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-U32BE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">U32BE is Codec[U32]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">32-bit unsigned integer, big-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-U32LE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">U32LE is Codec[U32]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">32-bit unsigned integer, little-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-I32BE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">I32BE is Codec[I32]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">32-bit signed integer, big-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-I32LE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">I32LE is Codec[I32]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">32-bit signed integer, little-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-U64BE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">U64BE is Codec[U64]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">64-bit unsigned integer, big-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-U64LE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">U64LE is Codec[U64]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">64-bit unsigned integer, little-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-I64BE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">I64BE is Codec[I64]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">64-bit signed integer, big-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-I64LE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">I64LE is Codec[I64]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">64-bit signed integer, little-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-F32BE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">F32BE is Codec[F32]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">32-bit IEEE 754 float, big-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-F32LE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">F32LE is Codec[F32]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">32-bit IEEE 754 float, little-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-F64BE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">F64BE is Codec[F64]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">64-bit IEEE 754 float, big-endian.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-F64LE">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">F64LE is Codec[F64]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">64-bit IEEE 754 float, little-endian.</div>
+    </div>
+  </div>
+
+  <h3>Bit-width codecs</h3>
+
+  <div class="type-block" id="type-BitsU8">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">BitsU8 is Codec[U8]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read or write an unsigned integer of 1&ndash;8 bits. Sub-byte fields: <code>BitsU8(4)</code> reads a nibble.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(count: U8)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-BitsU16">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">BitsU16 is Codec[U16]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read or write an unsigned integer of 1&ndash;16 bits, big-endian.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(count: U8)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-BitsU32">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">BitsU32 is Codec[U32]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read or write an unsigned integer of 1&ndash;32 bits, big-endian.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(count: U8)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-BitsU64">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">BitsU64 is Codec[U64]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read or write an unsigned integer of 1&ndash;64 bits, big-endian.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(count: U8)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Byte and literal codecs</h3>
+
+  <div class="type-block" id="type-Bytes">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Bytes is Codec[Array[U8] val]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read or write exactly <code>count</code> bytes. Requires byte alignment. Returns a zero-copy <code>trim</code> view of the input array.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(count: USize)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-BytesRest">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">BytesRest is Codec[Array[U8] val]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read all remaining bytes, or write a byte array with no length constraint. Requires byte alignment.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-Literal">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Literal is Codec[None]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Match or emit a fixed byte sequence. On decode, returns <code>MalformedData</code> if the bytes don't match. The decoded value is <code>None</code>.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(expected: Array[U8] val)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Sequence combinators</h3>
+
+  <div class="type-block" id="type-Seq2">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Seq2[A, B] is Codec[(A, B)]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Sequence two codecs, producing a tuple of their decoded values.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(a: Codec[A], b: Codec[B])</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-Seq3">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Seq3[A, B, C] is Codec[(A, B, C)]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Sequence three codecs, producing a 3-tuple.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(a: Codec[A], b: Codec[B], c: Codec[C])</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-Seq4">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Seq4[A, B, C, D] is Codec[(A, B, C, D)]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Sequence four codecs, producing a 4-tuple.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(a: Codec[A], b: Codec[B], c: Codec[C], d: Codec[D])</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-Seq5">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Seq5[A, B, C, D, E] is Codec[(A, B, C, D, E)]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Sequence five codecs, producing a 5-tuple.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(a: Codec[A], b: Codec[B], c: Codec[C], d: Codec[D], e: Codec[E])</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-Seq6">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Seq6[A, B, C, D, E, F] is Codec[(A, B, C, D, E, F)]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Sequence six codecs, producing a 6-tuple. Larger structures compose from smaller Seq groups via Iso.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(a: Codec[A], b: Codec[B], c: Codec[C], d: Codec[D], e: Codec[E], f: Codec[F])</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Structural combinators</h3>
+
+  <div class="type-block" id="type-Iso">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Iso[A, B] is Codec[B]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Bidirectional type mapping between a wire type <code>A</code> and a domain type <code>B</code>. The forward function may fail (partial) to signal malformed data.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(c: Codec[A], f: {(A): B ?} val, r: {(B): A} val)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-Widen">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Widen[V, Msg] is Codec[Msg]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Widen a codec's type from a specific variant <code>V</code> to a broader union <code>Msg</code>. Used internally by DiscriminatedBuilder.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(codec: Codec[V], narrow: {(Msg): V ?} val)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-ThenConst">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">ThenConst[A] is Codec[A]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Decode a value followed by a literal, keeping only the value. On encode, write both.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(codec: Codec[A], literal: Literal)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-ConstThen">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">ConstThen[A] is Codec[A]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Decode a literal followed by a value, keeping only the value. On encode, write both.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(literal: Literal, codec: Codec[A])</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-FlatZip">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">FlatZip[A, B] is Codec[(A, B)]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Dependent sequencing: the second codec is determined by the first decoded value. On encode, <code>A</code> is available from the tuple so the same dispatch works in reverse.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(ca: Codec[A], f: {(A): Codec[B]} val)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-VariableSize">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">VariableSize[A] is Codec[A]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Length-prefixed data: a size codec determines how many bytes the body reads from. On encode, the body is encoded first, measured, then the size is written before it.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(size_codec: Codec[U16], body_codec: Codec[A])</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-Conditional">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Conditional[A] is Codec[(A | None)]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Conditionally present field: if the flag is true, decode/encode using the inner codec; if false, the value is <code>None</code>.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(flag: Bool, codec: Codec[A])</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-SkipBits">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">SkipBits is Codec[None]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Skip a fixed number of bits on decode, write zero bits on encode. For reserved or padding fields.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(count: USize)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Repetition</h3>
+
+  <div class="type-block" id="type-Count">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Count[A] is Codec[Array[A] val]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read a count field, then decode that many instances of the body codec. On encode, write the array length as the count, then each element.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(count_codec: Codec[U16], body_codec: Codec[A])</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-Many">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Many[A] is Codec[Array[A] val]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Decode elements repeatedly until the input is exhausted. Stops on InsufficientData; propagates MalformedData as an error.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> val create(codec: Codec[A])</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Tagged union dispatch</h3>
+
+  <div class="type-block" id="type-Discriminated">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class val</span>
+      <span class="type-name">Discriminated[D, Msg] is Codec[Msg]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Tagged union dispatch: a discriminator codec selects which variant codec to use. On decode, reads the tag and dispatches. On encode, tests each variant's narrowing function. Built via DiscriminatedBuilder.</div>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-DiscriminatedBuilder">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class ref</span>
+      <span class="type-name">DiscriminatedBuilder[D, Msg]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Builder for constructing a Discriminated codec. Register each variant with <code>case_of</code>, then call <code>build()</code>.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> ref create(disc_codec: Codec[D])</li>
+        <li><span class="method-kind">fun</span> ref case_of[V: Msg](disc: D, codec: Codec[V], narrow: {(Msg): V ?} val): DiscriminatedBuilder[D, Msg] ref</li>
+        <li><span class="method-kind">fun</span> ref build(): Discriminated[D, Msg]</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>TCP stream framing</h3>
+
+  <div class="type-block" id="type-FrameDecoder">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">class ref</span>
+      <span class="type-name">FrameDecoder[A]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Wraps any Codec[A] for TCP stream framing. Incoming <code>iso</code> chunks are concatenated with unconsumed remainder into a <code>val</code> buffer for zero-copy decoding. InsufficientData means "wait for more bytes"; MalformedData is reported via FrameNotify.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">new</span> ref create(codec: Codec[A])</li>
+        <li><span class="method-kind">fun</span> ref received(data: Array[U8] iso, notify: FrameNotify[A] ref)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-FrameNotify">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">interface ref</span>
+      <span class="type-name">FrameNotify[A]</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Callback interface for FrameDecoder. Receives complete decoded values and error notifications.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">fun</span> ref frame_received(value: A)</li>
+        <li><span class="method-kind">fun</span> ref frame_error(err: MalformedData)</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+<section id="architecture">
+  <h2>Architecture</h2>
+  <div class="diagram-container">
+    <svg width="100%" viewBox="0 0 720 420" style="max-width:720px">
+      <defs>
+        <marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-edge)"/>
+        </marker>
+      </defs>
+
+      <!-- Layer labels -->
+      <text x="10" y="30" font-size="11" font-weight="600" fill="var(--muted)">CORE TRAIT</text>
+      <text x="10" y="130" font-size="11" font-weight="600" fill="var(--muted)">PRIMITIVES</text>
+      <text x="10" y="250" font-size="11" font-weight="600" fill="var(--muted)">COMBINATORS</text>
+      <text x="10" y="370" font-size="11" font-weight="600" fill="var(--muted)">FRAMING</text>
+
+      <!-- Codec trait -->
+      <rect x="270" y="15" width="180" height="38" rx="6" fill="var(--diagram-highlight)" fill-opacity="0.2" stroke="var(--diagram-highlight)" stroke-width="1.5"/>
+      <text x="360" y="39" text-anchor="middle" font-size="14" font-weight="600">Codec[A]</text>
+
+      <!-- Primitives row -->
+      <rect x="90" y="80" width="120" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="150" y="102" text-anchor="middle" font-size="12">U8..U64 BE/LE</text>
+
+      <rect x="230" y="80" width="120" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="290" y="102" text-anchor="middle" font-size="12">BitsU8..U64</text>
+
+      <rect x="370" y="80" width="100" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="420" y="102" text-anchor="middle" font-size="12">Bytes</text>
+
+      <rect x="490" y="80" width="100" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="540" y="102" text-anchor="middle" font-size="12">Literal</text>
+
+      <rect x="610" y="80" width="90" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="655" y="102" text-anchor="middle" font-size="12">BoolBit</text>
+
+      <!-- Arrows from Codec to primitives -->
+      <line x1="300" y1="53" x2="150" y2="80" stroke="var(--diagram-edge)" stroke-width="1" marker-end="url(#ah)"/>
+      <line x1="340" y1="53" x2="290" y2="80" stroke="var(--diagram-edge)" stroke-width="1" marker-end="url(#ah)"/>
+      <line x1="380" y1="53" x2="420" y2="80" stroke="var(--diagram-edge)" stroke-width="1" marker-end="url(#ah)"/>
+      <line x1="410" y1="53" x2="540" y2="80" stroke="var(--diagram-edge)" stroke-width="1" marker-end="url(#ah)"/>
+      <line x1="430" y1="53" x2="655" y2="80" stroke="var(--diagram-edge)" stroke-width="1" marker-end="url(#ah)"/>
+
+      <!-- Combinators row -->
+      <rect x="50" y="170" width="100" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="100" y="192" text-anchor="middle" font-size="12">Seq2..6</text>
+
+      <rect x="170" y="170" width="70" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="205" y="192" text-anchor="middle" font-size="12">Iso</text>
+
+      <rect x="260" y="170" width="90" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="305" y="192" text-anchor="middle" font-size="12">FlatZip</text>
+
+      <rect x="370" y="170" width="90" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="415" y="192" text-anchor="middle" font-size="12">Many</text>
+
+      <rect x="480" y="170" width="90" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="525" y="192" text-anchor="middle" font-size="12">Count</text>
+
+      <rect x="590" y="170" width="110" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="645" y="192" text-anchor="middle" font-size="12">Discriminated</text>
+
+      <!-- second combinator row -->
+      <rect x="80" y="220" width="110" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="135" y="242" text-anchor="middle" font-size="12">ThenConst</text>
+
+      <rect x="210" y="220" width="110" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="265" y="242" text-anchor="middle" font-size="12">ConstThen</text>
+
+      <rect x="340" y="220" width="120" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="400" y="242" text-anchor="middle" font-size="12">VariableSize</text>
+
+      <rect x="480" y="220" width="110" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="535" y="242" text-anchor="middle" font-size="12">Conditional</text>
+
+      <rect x="610" y="220" width="90" height="34" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="655" y="242" text-anchor="middle" font-size="12">SkipBits</text>
+
+      <!-- Arrows from primitives down to combinators (composition) -->
+      <line x1="150" y1="114" x2="100" y2="170" stroke="var(--diagram-edge)" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+      <line x1="290" y1="114" x2="205" y2="170" stroke="var(--diagram-edge)" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+      <line x1="420" y1="114" x2="305" y2="170" stroke="var(--diagram-edge)" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+      <line x1="420" y1="114" x2="415" y2="170" stroke="var(--diagram-edge)" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+      <line x1="420" y1="114" x2="525" y2="170" stroke="var(--diagram-edge)" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+      <line x1="540" y1="114" x2="645" y2="170" stroke="var(--diagram-edge)" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+
+      <!-- Framing row -->
+      <rect x="220" y="310" width="150" height="38" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="295" y="334" text-anchor="middle" font-size="13" font-weight="600">FrameDecoder</text>
+
+      <rect x="420" y="310" width="150" height="38" rx="5" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1"/>
+      <text x="495" y="334" text-anchor="middle" font-size="13">FrameNotify</text>
+
+      <!-- Arrows from combinators to FrameDecoder -->
+      <line x1="295" y1="254" x2="295" y2="310" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+
+      <!-- Arrow between FrameDecoder and FrameNotify -->
+      <line x1="370" y1="329" x2="420" y2="329" stroke="var(--diagram-edge)" stroke-width="1" marker-end="url(#ah)"/>
+
+      <!-- Error types -->
+      <rect x="220" y="370" width="350" height="30" rx="5" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="395" y="390" text-anchor="middle" font-size="11" fill="var(--muted)">DecodeError (InsufficientData | MalformedData) &bull; EncodeError (EncodeViolation)</text>
+    </svg>
+  </div>
+  <p>Primitive codecs (<code>U16BE</code>, <code>BitsU8</code>, <code>Bytes</code>, etc.) implement the <code>Codec</code> trait directly. Combinators compose codecs: <code>Seq</code> for tuples, <code>Iso</code> for type mapping, <code>FlatZip</code> for dependent parsing, <code>Discriminated</code> for tagged unions, <code>Many</code>/<code>Count</code> for repetition. All combinators are themselves codecs, so they compose recursively.</p>
+  <p><code>FrameDecoder</code> wraps any composed codec for TCP streaming, using the <code>InsufficientData</code>/<code>MalformedData</code> distinction to separate "wait for more" from "corrupt data." It notifies the application through the <code>FrameNotify</code> interface.</p>
+</section>
+
+</main>
+
+<script>
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('nav a[href^="#"]');
+let currentSection = 0;
+
+function updateActiveNav() {
+  navLinks.forEach(a => a.classList.remove('active'));
+  const id = sections[currentSection]?.id;
+  if (id) {
+    const link = document.querySelector('nav a[href="#' + id + '"]');
+    if (link) link.classList.add('active');
+  }
+}
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = Array.from(sections).indexOf(entry.target);
+      if (idx >= 0) { currentSection = idx; updateActiveNav(); }
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+
+sections.forEach(s => observer.observe(s));
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'j' || e.key === 'J') {
+    e.preventDefault();
+    currentSection = Math.min(currentSection + 1, sections.length - 1);
+    sections[currentSection].scrollIntoView({ behavior: 'smooth' });
+    updateActiveNav();
+  } else if (e.key === 'k' || e.key === 'K') {
+    e.preventDefault();
+    currentSection = Math.max(currentSection - 1, 0);
+    sections[currentSection].scrollIntoView({ behavior: 'smooth' });
+    updateActiveNav();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    sections[currentSection].querySelectorAll('.panel:not(.open)').forEach(el => el.classList.add('open'));
+  } else if (e.key === 'Escape') {
+    document.querySelectorAll('.panel.open').forEach(el => el.classList.remove('open'));
+  }
+});
+
+navLinks.forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+      const idx = Array.from(sections).indexOf(target);
+      if (idx >= 0) { currentSection = idx; updateActiveNav(); }
+    }
+  });
+});
+
+(function() {
+  const typeIndex = new Map();
+  document.querySelectorAll('.type-block[id]').forEach(block => {
+    const nameEl = block.querySelector('.type-name');
+    if (!nameEl) return;
+    const raw = nameEl.textContent.trim();
+    const bare = raw.replace(/\[.*/, '').replace(/\s+is\s+.*/, '').replace(/.*\./, '');
+    if (bare) typeIndex.set(bare, block.id);
+  });
+  if (typeIndex.size === 0) return;
+
+  const names = Array.from(typeIndex.keys()).sort((a, b) => b.length - a.length);
+  const pattern = new RegExp('\\b(' + names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'g');
+
+  function walk(node) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const tag = node.tagName;
+      if (tag === 'A' || tag === 'PRE' || tag === 'CODE' || tag === 'svg' || tag === 'SCRIPT' || tag === 'STYLE') return;
+      if (node.classList.contains('type-name')) return;
+      Array.from(node.childNodes).forEach(walk);
+    } else if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent;
+      if (!pattern.test(text)) return;
+      pattern.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      let m;
+      while ((m = pattern.exec(text)) !== null) {
+        const typeName = m[1];
+        const anchor = typeIndex.get(typeName);
+        const ownerBlock = node.parentElement?.closest('.type-block');
+        if (ownerBlock && ownerBlock.id === anchor) continue;
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const a = document.createElement('a');
+        a.className = 'type-link';
+        a.href = '#' + anchor;
+        a.textContent = typeName;
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' });
+        });
+        frag.appendChild(a);
+        last = m.index + typeName.length;
+      }
+      if (last === 0) return;
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    }
+  }
+  walk(document.querySelector('main'));
+})();
+</script>
+
+</body>
+</html>
