@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR #6290 — Add byte_order standard library package</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #fafaf9;
+  --fg: #1c1917;
+  --muted: #78716c;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --border: #e7e5e4;
+  --code-bg: #f5f5f4;
+  --added-bg: #dcfce7;
+  --added-fg: #166534;
+  --removed-bg: #fee2e2;
+  --removed-fg: #991b1b;
+  --card-bg: #ffffff;
+  --nav-bg: #1c1917;
+  --nav-fg: #d6d3d1;
+  --nav-active: #60a5fa;
+  --diagram-node: #e0e7ff;
+  --diagram-edge: #6366f1;
+  --diagram-highlight: #f59e0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0a09;
+    --fg: #e7e5e4;
+    --muted: #a8a29e;
+    --accent: #60a5fa;
+    --accent-soft: #1e3a5f;
+    --border: #292524;
+    --code-bg: #1c1917;
+    --added-bg: #052e16;
+    --added-fg: #86efac;
+    --removed-bg: #450a0a;
+    --removed-fg: #fca5a5;
+    --card-bg: #1c1917;
+    --nav-bg: #0c0a09;
+    --nav-fg: #a8a29e;
+    --nav-active: #60a5fa;
+    --diagram-node: #312e81;
+    --diagram-edge: #818cf8;
+    --diagram-highlight: #fbbf24;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c0a09;
+  --fg: #e7e5e4;
+  --muted: #a8a29e;
+  --accent: #60a5fa;
+  --accent-soft: #1e3a5f;
+  --border: #292524;
+  --code-bg: #1c1917;
+  --added-bg: #052e16;
+  --added-fg: #86efac;
+  --removed-bg: #450a0a;
+  --removed-fg: #fca5a5;
+  --card-bg: #1c1917;
+  --nav-bg: #0c0a09;
+  --nav-fg: #a8a29e;
+  --nav-active: #60a5fa;
+  --diagram-node: #312e81;
+  --diagram-edge: #818cf8;
+  --diagram-highlight: #fbbf24;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100vh;
+  background: var(--nav-bg);
+  color: var(--nav-fg);
+  padding: 24px 0;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+nav .pr-label {
+  padding: 0 16px 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+nav .pr-title {
+  padding: 0 16px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.4;
+}
+
+nav ul { list-style: none; padding: 12px 0; margin: 0; flex: 1; }
+
+nav a {
+  display: block;
+  padding: 7px 16px 7px 20px;
+  color: var(--nav-fg);
+  text-decoration: none;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+nav a:hover { background: rgba(255,255,255,0.05); }
+
+nav a.active {
+  color: var(--nav-active);
+  background: rgba(96,165,250,0.08);
+}
+
+nav a.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 4px; bottom: 4px;
+  width: 3px;
+  background: var(--nav-active);
+  border-radius: 0 2px 2px 0;
+}
+
+nav .kbd-help {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+
+kbd {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+main {
+  margin-left: 220px;
+  padding: 32px 48px;
+  max-width: 860px;
+}
+
+section { margin-bottom: 48px; scroll-margin-top: 24px; }
+
+h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; text-wrap: balance; }
+h2 { font-size: 17px; font-weight: 600; margin-bottom: 16px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); display: inline-block; }
+h3 { font-size: 15px; font-weight: 600; margin: 20px 0 10px; }
+p { margin-bottom: 12px; }
+
+.summary-box {
+  background: var(--accent-soft);
+  border-left: 4px solid var(--accent);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  border-radius: 0 6px 6px 0;
+  font-size: 14px;
+}
+
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  font-size: 14px;
+}
+
+.panel-header:hover { background: rgba(0,0,0,0.02); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .panel-header:hover { background: rgba(255,255,255,0.03); }
+}
+:root[data-theme="dark"] .panel-header:hover { background: rgba(255,255,255,0.03); }
+
+.panel-header .arrow { transition: transform 0.2s; font-size: 10px; color: var(--muted); flex-shrink: 0; }
+.panel.open .arrow { transform: rotate(90deg); }
+
+.panel-body { display: none; padding: 0 14px 14px; border-top: 1px solid var(--border); }
+.panel.open .panel-body { display: block; padding-top: 14px; }
+
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.badge-removed { background: var(--removed-bg); color: var(--removed-fg); }
+.badge-added { background: var(--added-bg); color: var(--added-fg); }
+.badge-changed { background: var(--accent-soft); color: var(--accent); }
+
+.sig { font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-width: 0; }
+
+pre { background: var(--code-bg); padding: 10px 14px; border-radius: 5px; overflow-x: auto; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; }
+
+code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+
+.file-group-label { font-weight: 600; font-size: 13px; }
+.file-count { font-size: 12px; color: var(--muted); }
+.file-list { list-style: none; padding-left: 18px; }
+.file-list li { padding: 3px 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+.file-list a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+.file-list a:hover { color: var(--accent); text-decoration: underline; }
+.file-list .stat { font-size: 11px; margin-left: 6px; }
+.file-list .stat-add { color: var(--added-fg); }
+.file-list .stat-del { color: var(--removed-fg); }
+
+.stats { display: flex; gap: 16px; font-size: 13px; color: var(--muted); margin-bottom: 4px; flex-wrap: wrap; }
+
+.diagram-container { margin: 16px 0; padding: 20px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; overflow-x: auto; }
+.diagram-container svg { display: block; margin: 0 auto; }
+svg text { font-family: 'Inter', sans-serif; fill: var(--fg); }
+
+.type-block { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+.type-block-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.type-kind { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); flex-shrink: 0; }
+.type-name { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; min-width: 0; }
+.type-body { padding: 12px 14px; }
+.type-doc { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+.method-list { list-style: none; padding: 0; margin: 0; }
+.method-list li { padding: 6px 0; border-top: 1px solid var(--border); font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; }
+.method-list li:first-child { border-top: none; }
+.method-kind { color: var(--accent); font-weight: 600; font-size: 11px; }
+.method-doc { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+a.type-link { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+a.type-link:hover { border-bottom-style: solid; }
+
+.release-notes-content { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; font-size: 14px; line-height: 1.6; }
+.release-notes-content h3 { font-size: 15px; margin: 0 0 8px; }
+.release-notes-content p { margin-bottom: 8px; }
+.release-notes-content p:last-child { margin-bottom: 0; }
+
+@media (max-width: 768px) {
+  nav { position: static; width: 100%; height: auto; padding: 12px 16px; }
+  nav ul { display: flex; flex-wrap: wrap; gap: 2px; padding: 8px 0; }
+  nav li { flex: none; }
+  nav a { padding: 5px 10px; font-size: 12px; border-radius: 4px; }
+  nav a.active::before { display: none; }
+  nav .kbd-help { display: none; }
+  main { margin-left: 0; padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="pr-label">ponylang/ponyc</div>
+  <div class="pr-title">#6290 &mdash; Add byte_order package</div>
+  <ul>
+    <li><a href="#summary" class="active">Summary</a></li>
+    <li><a href="#motivation">Motivation</a></li>
+    <li><a href="#files">File Map</a></li>
+    <li><a href="#behavior">Behavioral Changes</a></li>
+    <li><a href="#surface">Public API Surface</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#release-notes">Release Notes</a></li>
+  </ul>
+  <div class="kbd-help">
+    <kbd>j</kbd> / <kbd>k</kbd> next / prev section<br>
+    <kbd>Enter</kbd> expand focused item<br>
+    <kbd>Esc</kbd> collapse all
+  </div>
+</nav>
+
+<main>
+
+<section id="summary">
+  <h1>Add byte_order standard library package</h1>
+  <div class="summary-box">
+    New <code>byte_order</code> package with <code>BigEndian</code> and <code>LittleEndian</code> primitives for reading and writing multi-byte values in a specific byte order.
+  </div>
+  <div class="stats">
+    <span>6 files changed</span>
+    <span style="color:var(--added-fg)">+858</span>
+    <span style="color:var(--removed-fg)">&minus;0</span>
+  </div>
+</section>
+
+<section id="motivation">
+  <h2>Motivation</h2>
+  <p>Closes <a href="https://github.com/ponylang/rfcs/issues/112">ponylang/rfcs#112</a>. Binary protocols and file formats require reading and writing integers in a specified byte order. Without a stdlib package, every project implements its own byte-swapping logic.</p>
+  <p>Read methods are generic over <code>ReadSeq[U8]</code>, so they work with any byte sequence type. When the concrete type is <code>Array[U8]</code>, iftype specialization selects an optimized path that uses native-width loads and conditional byte swaps. The generic path uses shift-and-OR.</p>
+</section>
+
+<section id="files">
+  <h2>File Map</h2>
+
+  <div class="panel open">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Package source</span>
+      <span class="file-count">3 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/53540d3c54e2c9a4a09806438c3d7b8662b1995b/packages/byte_order/byte_order.pony" target="_blank" rel="noopener">packages/byte_order/byte_order.pony</a> <span class="stat"><span class="stat-add">+46</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/53540d3c54e2c9a4a09806438c3d7b8662b1995b/packages/byte_order/big_endian.pony" target="_blank" rel="noopener">packages/byte_order/big_endian.pony</a> <span class="stat"><span class="stat-add">+169</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/53540d3c54e2c9a4a09806438c3d7b8662b1995b/packages/byte_order/little_endian.pony" target="_blank" rel="noopener">packages/byte_order/little_endian.pony</a> <span class="stat"><span class="stat-add">+169</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Tests</span>
+      <span class="file-count">2 files</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/53540d3c54e2c9a4a09806438c3d7b8662b1995b/packages/byte_order/_test.pony" target="_blank" rel="noopener">packages/byte_order/_test.pony</a> <span class="stat"><span class="stat-add">+455</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/53540d3c54e2c9a4a09806438c3d7b8662b1995b/packages/stdlib/_test.pony" target="_blank" rel="noopener">packages/stdlib/_test.pony</a> <span class="stat"><span class="stat-add">+2</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="arrow">&#9654;</span>
+      <span class="file-group-label">Release notes</span>
+      <span class="file-count">1 file</span>
+    </div>
+    <div class="panel-body">
+      <ul class="file-list">
+        <li><a href="https://github.com/ponylang/ponyc/blob/53540d3c54e2c9a4a09806438c3d7b8662b1995b/.release-notes/add-byte-order-package.md" target="_blank" rel="noopener">.release-notes/add-byte-order-package.md</a> <span class="stat"><span class="stat-add">+17</span></span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="behavior">
+  <h2>Behavioral Changes</h2>
+  <p>A new <code>use "byte_order"</code> import becomes available. The package provides two primitives that convert between native integers and their big-endian or little-endian byte representations.</p>
+  <p>Each primitive has 22 public methods: 10 read methods (U16, U32, U64, U128, I16, I32, I64, I128, F32, F64) that decode from a byte sequence, and 10 write methods that encode by appending bytes to an <code>Array[U8]</code>. Unsigned read methods (u16, u32, u64, u128) each have an iftype-specialized variant for <code>Array[U8]</code> that uses native-width loads and byte swaps instead of the generic shift-and-OR path. Signed reads delegate to unsigned, float reads delegate via <code>bits()</code>/<code>from_bits()</code>.</p>
+  <p>All read methods are partial &mdash; they raise an error when the sequence has too few bytes at the given offset.</p>
+</section>
+
+<section id="surface">
+  <h2>Public API Surface</h2>
+
+  <div class="type-block" id="type-BigEndian">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">BigEndian</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read and write multi-byte values in big-endian (network) byte order. Read methods are generic over any <code>ReadSeq[U8]</code>. When the concrete sequence is an <code>Array[U8]</code>, an optimized path uses a single native-width load and a conditional byte swap.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">fun</span> u16[S: ReadSeq[U8] box](seq: S, offset: USize = 0): U16 ?<div class="method-doc">Read a big-endian U16 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> u32[S: ReadSeq[U8] box](seq: S, offset: USize = 0): U32 ?<div class="method-doc">Read a big-endian U32 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> u64[S: ReadSeq[U8] box](seq: S, offset: USize = 0): U64 ?<div class="method-doc">Read a big-endian U64 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> u128[S: ReadSeq[U8] box](seq: S, offset: USize = 0): U128 ?<div class="method-doc">Read a big-endian U128 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> i16[S: ReadSeq[U8] box](seq: S, offset: USize = 0): I16 ?<div class="method-doc">Read a big-endian I16 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> i32[S: ReadSeq[U8] box](seq: S, offset: USize = 0): I32 ?<div class="method-doc">Read a big-endian I32 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> i64[S: ReadSeq[U8] box](seq: S, offset: USize = 0): I64 ?<div class="method-doc">Read a big-endian I64 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> i128[S: ReadSeq[U8] box](seq: S, offset: USize = 0): I128 ?<div class="method-doc">Read a big-endian I128 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> f32[S: ReadSeq[U8] box](seq: S, offset: USize = 0): F32 ?<div class="method-doc">Read a big-endian F32 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> f64[S: ReadSeq[U8] box](seq: S, offset: USize = 0): F64 ?<div class="method-doc">Read a big-endian F64 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> push_u16(into: Array[U8] ref, value: U16)<div class="method-doc">Append a U16 to <code>into</code> in big-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_u32(into: Array[U8] ref, value: U32)<div class="method-doc">Append a U32 to <code>into</code> in big-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_u64(into: Array[U8] ref, value: U64)<div class="method-doc">Append a U64 to <code>into</code> in big-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_u128(into: Array[U8] ref, value: U128)<div class="method-doc">Append a U128 to <code>into</code> in big-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_i16(into: Array[U8] ref, value: I16)<div class="method-doc">Append an I16 to <code>into</code> in big-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_i32(into: Array[U8] ref, value: I32)<div class="method-doc">Append an I32 to <code>into</code> in big-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_i64(into: Array[U8] ref, value: I64)<div class="method-doc">Append an I64 to <code>into</code> in big-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_i128(into: Array[U8] ref, value: I128)<div class="method-doc">Append an I128 to <code>into</code> in big-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_f32(into: Array[U8] ref, value: F32)<div class="method-doc">Append an F32 to <code>into</code> in big-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_f64(into: Array[U8] ref, value: F64)<div class="method-doc">Append an F64 to <code>into</code> in big-endian byte order.</div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="type-block" id="type-LittleEndian">
+    <div class="type-block-header">
+      <span class="badge badge-added">New</span>
+      <span class="type-kind">primitive</span>
+      <span class="type-name">LittleEndian</span>
+    </div>
+    <div class="type-body">
+      <div class="type-doc">Read and write multi-byte values in little-endian byte order. Same method set as BigEndian; byte order is reversed.</div>
+      <ul class="method-list">
+        <li><span class="method-kind">fun</span> u16[S: ReadSeq[U8] box](seq: S, offset: USize = 0): U16 ?<div class="method-doc">Read a little-endian U16 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> u32[S: ReadSeq[U8] box](seq: S, offset: USize = 0): U32 ?<div class="method-doc">Read a little-endian U32 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> u64[S: ReadSeq[U8] box](seq: S, offset: USize = 0): U64 ?<div class="method-doc">Read a little-endian U64 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> u128[S: ReadSeq[U8] box](seq: S, offset: USize = 0): U128 ?<div class="method-doc">Read a little-endian U128 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> i16[S: ReadSeq[U8] box](seq: S, offset: USize = 0): I16 ?<div class="method-doc">Read a little-endian I16 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> i32[S: ReadSeq[U8] box](seq: S, offset: USize = 0): I32 ?<div class="method-doc">Read a little-endian I32 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> i64[S: ReadSeq[U8] box](seq: S, offset: USize = 0): I64 ?<div class="method-doc">Read a little-endian I64 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> i128[S: ReadSeq[U8] box](seq: S, offset: USize = 0): I128 ?<div class="method-doc">Read a little-endian I128 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> f32[S: ReadSeq[U8] box](seq: S, offset: USize = 0): F32 ?<div class="method-doc">Read a little-endian F32 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> f64[S: ReadSeq[U8] box](seq: S, offset: USize = 0): F64 ?<div class="method-doc">Read a little-endian F64 from <code>seq</code> at <code>offset</code>.</div></li>
+        <li><span class="method-kind">fun</span> push_u16(into: Array[U8] ref, value: U16)<div class="method-doc">Append a U16 to <code>into</code> in little-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_u32(into: Array[U8] ref, value: U32)<div class="method-doc">Append a U32 to <code>into</code> in little-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_u64(into: Array[U8] ref, value: U64)<div class="method-doc">Append a U64 to <code>into</code> in little-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_u128(into: Array[U8] ref, value: U128)<div class="method-doc">Append a U128 to <code>into</code> in little-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_i16(into: Array[U8] ref, value: I16)<div class="method-doc">Append an I16 to <code>into</code> in little-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_i32(into: Array[U8] ref, value: I32)<div class="method-doc">Append an I32 to <code>into</code> in little-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_i64(into: Array[U8] ref, value: I64)<div class="method-doc">Append an I64 to <code>into</code> in little-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_i128(into: Array[U8] ref, value: I128)<div class="method-doc">Append an I128 to <code>into</code> in little-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_f32(into: Array[U8] ref, value: F32)<div class="method-doc">Append an F32 to <code>into</code> in little-endian byte order.</div></li>
+        <li><span class="method-kind">fun</span> push_f64(into: Array[U8] ref, value: F64)<div class="method-doc">Append an F64 to <code>into</code> in little-endian byte order.</div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="architecture">
+  <h2>Architecture</h2>
+  <p>Both primitives are stateless and share the same structure. Read methods dispatch at compile time via iftype specialization:</p>
+
+  <div class="diagram-container">
+    <svg width="100%" viewBox="0 0 700 340" style="max-width:700px">
+      <defs>
+        <marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-edge)"/>
+        </marker>
+      </defs>
+
+      <text x="350" y="24" text-anchor="middle" font-size="14" font-weight="600">Read path dispatch (compile-time)</text>
+
+      <rect x="250" y="44" width="200" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="350" y="72" text-anchor="middle" font-size="13" font-weight="500">u16 / u32 / u64 / u128</text>
+
+      <line x1="280" y1="88" x2="160" y2="148" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <line x1="420" y1="88" x2="540" y2="148" stroke="var(--diagram-edge)" stroke-width="1.5" marker-end="url(#ah)"/>
+
+      <text x="190" y="130" text-anchor="middle" font-size="11" fill="var(--muted)">S <: Array[U8] box</text>
+      <text x="510" y="130" text-anchor="middle" font-size="11" fill="var(--muted)">other ReadSeq[U8]</text>
+
+      <rect x="40" y="148" width="240" height="44" rx="6" fill="var(--diagram-highlight)" fill-opacity="0.15" stroke="var(--diagram-highlight)" stroke-width="1.5"/>
+      <text x="160" y="176" text-anchor="middle" font-size="12" font-weight="500">read_uN() + ifdef bswap</text>
+
+      <rect x="420" y="148" width="240" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="540" y="176" text-anchor="middle" font-size="12" font-weight="500">shift-and-OR via apply()</text>
+
+      <text x="160" y="216" text-anchor="middle" font-size="11" fill="var(--muted)">single load + 0&ndash;1 bswap instructions</text>
+      <text x="540" y="216" text-anchor="middle" font-size="11" fill="var(--muted)">N byte reads + N&minus;1 shifts + N&minus;1 ORs</text>
+
+      <line x1="0" y1="244" x2="700" y2="244" stroke="var(--border)" stroke-width="1" stroke-dasharray="6,4"/>
+
+      <text x="350" y="270" text-anchor="middle" font-size="14" font-weight="600">Write path (no specialization needed)</text>
+
+      <rect x="200" y="284" width="300" height="44" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-edge)" stroke-width="1.5"/>
+      <text x="350" y="312" text-anchor="middle" font-size="12" font-weight="500">push_uN: shift + push bytes in order</text>
+    </svg>
+  </div>
+
+  <p>Signed reads (<code>i16</code>&ndash;<code>i128</code>) delegate to the unsigned read and cast. Float reads (<code>f32</code>, <code>f64</code>) delegate via <code>bits()</code>/<code>from_bits()</code>. Write methods are the inverse: signed and float writes delegate to unsigned, which pushes individual bytes in the appropriate order.</p>
+
+  <p>The difference between BigEndian and LittleEndian is two-fold: the <code>ifdef</code> guard checks <code>bigendian</code> vs. <code>littleendian</code> in the Array path, and the shift-and-OR generic path reverses which end of the value the low-offset bytes map to.</p>
+</section>
+
+<section id="release-notes">
+  <h2>Release Notes</h2>
+  <div class="release-notes-content">
+    <h3>Add byte_order standard library package</h3>
+    <p>A new <code>byte_order</code> package provides <code>BigEndian</code> and <code>LittleEndian</code> primitives for converting multi-byte values to and from their wire representation.</p>
+    <p>Read methods decode from any <code>ReadSeq[U8]</code> source (with an optimized path for <code>Array[U8]</code>). Write methods append encoded bytes to an <code>Array[U8]</code>. Both primitives cover U16&ndash;U128, their signed counterparts, and F32/F64.</p>
+<pre>use "byte_order"
+
+// Encode a U32 in network (big-endian) order
+let buf = Array[U8]
+BigEndian.push_u32(buf, 0xDEADBEEF)
+// buf is now [0xDE; 0xAD; 0xBE; 0xEF]
+
+// Decode it back
+let value = BigEndian.u32[Array[U8] box](buf)?  // 0xDEADBEEF</pre>
+  </div>
+</section>
+
+</main>
+
+<script>
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('nav a[href^="#"]');
+let currentSection = 0;
+
+function updateActiveNav() {
+  navLinks.forEach(a => a.classList.remove('active'));
+  const id = sections[currentSection]?.id;
+  if (id) {
+    const link = document.querySelector('nav a[href="#' + id + '"]');
+    if (link) link.classList.add('active');
+  }
+}
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = Array.from(sections).indexOf(entry.target);
+      if (idx >= 0) { currentSection = idx; updateActiveNav(); }
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+
+sections.forEach(s => observer.observe(s));
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'j' || e.key === 'J') {
+    e.preventDefault();
+    currentSection = Math.min(currentSection + 1, sections.length - 1);
+    sections[currentSection].scrollIntoView({ behavior: 'smooth' });
+    updateActiveNav();
+  } else if (e.key === 'k' || e.key === 'K') {
+    e.preventDefault();
+    currentSection = Math.max(currentSection - 1, 0);
+    sections[currentSection].scrollIntoView({ behavior: 'smooth' });
+    updateActiveNav();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    sections[currentSection].querySelectorAll('.panel:not(.open)').forEach(el => el.classList.add('open'));
+  } else if (e.key === 'Escape') {
+    document.querySelectorAll('.panel.open').forEach(el => el.classList.remove('open'));
+  }
+});
+
+navLinks.forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+      const idx = Array.from(sections).indexOf(target);
+      if (idx >= 0) { currentSection = idx; updateActiveNav(); }
+    }
+  });
+});
+
+(function() {
+  const typeIndex = new Map();
+  document.querySelectorAll('.type-block[id]').forEach(block => {
+    const nameEl = block.querySelector('.type-name');
+    if (!nameEl) return;
+    const raw = nameEl.textContent.trim();
+    const bare = raw.replace(/\[.*/, '').replace(/\s+is\s+.*/, '').replace(/.*\./, '');
+    if (bare) typeIndex.set(bare, block.id);
+  });
+  if (typeIndex.size === 0) return;
+
+  const names = Array.from(typeIndex.keys()).sort((a, b) => b.length - a.length);
+  const pattern = new RegExp('\\b(' + names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'g');
+
+  function walk(node) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const tag = node.tagName;
+      if (tag === 'A' || tag === 'PRE' || tag === 'CODE' || tag === 'svg' || tag === 'SCRIPT' || tag === 'STYLE') return;
+      if (node.classList.contains('type-name')) return;
+      Array.from(node.childNodes).forEach(walk);
+    } else if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent;
+      if (!pattern.test(text)) return;
+      pattern.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      let m;
+      while ((m = pattern.exec(text)) !== null) {
+        const typeName = m[1];
+        const anchor = typeIndex.get(typeName);
+        const ownerBlock = node.parentElement?.closest('.type-block');
+        if (ownerBlock && ownerBlock.id === anchor) continue;
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const a = document.createElement('a');
+        a.className = 'type-link';
+        a.href = '#' + anchor;
+        a.textContent = typeName;
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' });
+        });
+        frag.appendChild(a);
+        last = m.index + typeName.length;
+      }
+      if (last === 0) return;
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    }
+  }
+  walk(document.querySelector('main'));
+})();
+</script>
+
+</body>
+</html>
