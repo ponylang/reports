@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auto-Recover Error Message Options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #fafaf9;
+    --fg: #1c1917;
+    --muted: #78716c;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --accent: #0c4a6e;
+    --accent-light: #e0f2fe;
+    --code-bg: #f5f5f4;
+    --good: #166534;
+    --good-bg: #dcfce7;
+    --warn: #92400e;
+    --warn-bg: #fef3c7;
+    --bad: #991b1b;
+    --bad-bg: #fee2e2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1a1a1a;
+      --fg: #e7e5e4;
+      --muted: #a8a29e;
+      --surface: #262626;
+      --border: #3a3a3a;
+      --accent: #7dd3fc;
+      --accent-light: #0c3547;
+      --code-bg: #2a2a2a;
+      --good: #86efac;
+      --good-bg: #14261c;
+      --warn: #fcd34d;
+      --warn-bg: #2a2210;
+      --bad: #fca5a5;
+      --bad-bg: #2a1515;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1a1a;
+    --fg: #e7e5e4;
+    --muted: #a8a29e;
+    --surface: #262626;
+    --border: #3a3a3a;
+    --accent: #7dd3fc;
+    --accent-light: #0c3547;
+    --code-bg: #2a2a2a;
+    --good: #86efac;
+    --good-bg: #14261c;
+    --warn: #fcd34d;
+    --warn-bg: #2a2210;
+    --bad: #fca5a5;
+    --bad-bg: #2a1515;
+    color-scheme: dark;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 2rem 1rem;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin: 0 0 0.25rem;
+    text-wrap: balance;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.875rem;
+    margin-bottom: 2rem;
+  }
+  .subtitle a { color: var(--accent); text-decoration: none; }
+  .subtitle a:hover { text-decoration: underline; }
+  h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 2.5rem 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--border);
+  }
+  h3 {
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 1.5rem 0 0.5rem;
+  }
+  p { margin: 0.75rem 0; }
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85em;
+    background: var(--code-bg);
+    padding: 0.15em 0.35em;
+    border-radius: 3px;
+  }
+  pre {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    background: var(--code-bg);
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    line-height: 1.5;
+    margin: 0.75rem 0;
+    border: 1px solid var(--border);
+  }
+  pre code { background: none; padding: 0; }
+  .error-output { border-left: 3px solid var(--bad); }
+  .proposed-output { border-left: 3px solid var(--good); }
+  .new-line { color: var(--good); font-weight: 500; }
+  .option-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+  }
+  .option-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+  .option-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.2em 0.5em;
+    border-radius: 3px;
+  }
+  .badge-low { background: var(--good-bg); color: var(--good); }
+  .badge-med { background: var(--warn-bg); color: var(--warn); }
+  .badge-high { background: var(--bad-bg); color: var(--bad); }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr;
+    gap: 0.35rem 0.75rem;
+    font-size: 0.875rem;
+    margin: 0.75rem 0;
+  }
+  .detail-label {
+    color: var(--muted);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .detail-value { min-width: 0; }
+  .file-ref {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+  .callout {
+    background: var(--accent-light);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin: 1rem 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .summary-table th {
+    text-align: left;
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  .summary-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .summary-table tr:last-child td { border-bottom: none; }
+  ol, ul { padding-left: 1.5rem; }
+  li { margin: 0.5rem 0; }
+  @media (max-width: 500px) {
+    .detail-grid { grid-template-columns: 1fr; }
+    .detail-label { margin-top: 0.25rem; }
+    .summary-table { font-size: 0.78rem; }
+    .summary-table th, .summary-table td { padding: 0.4rem 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Auto-Recover Error Message Options</h1>
+  <div class="subtitle">
+    Issue <a href="https://github.com/ponylang/ponyc/issues/2822">#2822</a> &mdash;
+    improving the error when array literal auto-recovery lowers a variable's capability
+  </div>
+
+  <h2>The problem</h2>
+  <p>
+    When the compiler auto-recovers an array literal (wrapping it in an implicit
+    <code>recover iso</code> so it can be assigned to a <code>val</code> target), any
+    non-sendable variable defined outside the synthetic recover has its capability
+    silently lowered to <code>tag</code>. The subtype check then fails, and the error
+    message reports the lowered capability without explaining why it changed.
+  </p>
+  <p>
+    The user sees <code>Foo tag</code> where they declared <code>Foo ref</code>,
+    with no indication that auto-recovery caused the change.
+  </p>
+
+  <h3>Current error output</h3>
+  <pre class="error-output"><code>Error:
+main.pony:36:22: array element not a subtype of specified array type
+        let b = Bar([f])
+                    ^
+    Info:
+    main.pony:19:32: array type: Foo box
+      new create(children: ReadSeq[Foo box] val) =&gt;
+                                  ^
+    main.pony:33:16: element type: Foo tag
+            let f: Foo ref = Foo
+                  ^
+    main.pony:33:16: Foo tag is not a subtype of Foo box:
+      tag is not a subcap of box
+            let f: Foo ref = Foo
+                  ^</code></pre>
+
+  <h3>Proposed error output</h3>
+  <pre class="proposed-output"><code>Error:
+main.pony:36:22: array element not a subtype of specified array type
+        let b = Bar([f])
+                    ^
+    Info:
+    main.pony:19:32: array type: Foo box
+      new create(children: ReadSeq[Foo box] val) =&gt;
+                                  ^
+    main.pony:33:16: element type: Foo tag
+            let f: Foo ref = Foo
+                  ^
+    main.pony:33:16: Foo tag is not a subtype of Foo box:
+      tag is not a subcap of box
+            let f: Foo ref = Foo
+                  ^
+<span class="new-line">    main.pony:33:16: f is Foo ref but is treated as Foo tag
+      because the array literal is implicitly recovered</span></code></pre>
+
+  <h2>How it works today</h2>
+  <p>The flow crosses three files:</p>
+  <ol>
+    <li>
+      <span class="file-ref">src/libponyc/expr/array.c:438&ndash;464</span> &mdash;
+      <code>expr_pre_array()</code> detects that the array type would match the
+      antecedent if capabilities were ignored. It wraps the literal in a synthetic
+      <code>TK_RECOVER</code> node and processes it through the expr pass.
+    </li>
+    <li>
+      <span class="file-ref">src/libponyc/expr/reference.c:556&ndash;566</span> &mdash;
+      <code>expr_localref()</code> sees the variable reference inside a recover where
+      the definition is outside. It silently lowers the cap to <code>tag</code> via
+      <code>set_cap_and_ephemeral(type, TK_TAG, TK_NONE)</code>. No diagnostic is emitted.
+    </li>
+    <li>
+      <span class="file-ref">src/libponyc/expr/array.c:532&ndash;543</span> &mdash;
+      <code>expr_array()</code> runs the subtype check. The element type is already
+      <code>tag</code>. The error chain says &ldquo;tag is not a subcap of box&rdquo;
+      with no explanation of why it became <code>tag</code>.
+    </li>
+  </ol>
+
+  <h2>Options</h2>
+
+  <div class="option-card">
+    <div class="option-header">
+      <span class="option-name">A. Reconstruct at error time</span>
+      <span class="badge badge-low">Low effort</span>
+      <span class="badge badge-low">Low maintenance</span>
+    </div>
+    <p>
+      At the error site in <code>expr_array()</code>, after the subtype check fails,
+      check whether the element is a bare variable reference (<code>TK_VARREF</code> or
+      <code>TK_LETREF</code>). If so, compare the cap on the variable's
+      <em>definition</em> (the original declared type, still intact on the def node)
+      with the cap on the <em>reference</em> (the lowered type). When they differ and
+      we're inside a recover, add the explanatory info line.
+    </p>
+    <div class="detail-grid">
+      <span class="detail-label">Files changed</span>
+      <span class="detail-value">1 &mdash; <code>array.c</code></span>
+      <span class="detail-label">Lines added</span>
+      <span class="detail-value">~15</span>
+      <span class="detail-label">New infra</span>
+      <span class="detail-value">None</span>
+      <span class="detail-label">Coverage</span>
+      <span class="detail-value">
+        Bare variable references only. Does not cover complex expressions
+        like <code>[foo.bar()]</code> or <code>[consume x]</code> where the element
+        isn't a simple variable reference.
+      </span>
+      <span class="detail-label">Maintenance</span>
+      <span class="detail-value">
+        Near zero. The detection logic reads existing AST structure that has been
+        stable for years (definition node type vs. reference node type). No new
+        invariants to maintain. If the auto-recover mechanism itself changes, this
+        code is adjacent to it in the same file.
+      </span>
+    </div>
+    <h3>Sketch</h3>
+    <pre><code>// In expr_array(), after the is_subtype failure and before errorframe_report:
+if((ast_id(ele) == TK_VARREF || ast_id(ele) == TK_LETREF)
+  &amp;&amp; opt-&gt;check.frame-&gt;recover != NULL)
+{
+  ast_t* def = (ast_t*)ast_data(ele);
+  ast_t* def_type = ast_type(def);
+  if(def_type != NULL &amp;&amp; !is_typecheck_error(def_type))
+  {
+    token_id def_cap = cap_single(def_type);
+    token_id ref_cap = cap_single(c_type);
+    if(def_cap != ref_cap)
+    {
+      ast_error_frame(&amp;frame, ele,
+        "%s is %s but is treated as %s because the array "
+        "literal is implicitly recovered",
+        ast_nice_name(ast_child(def)),
+        ast_print_type(def_type, opt-&gt;strtab),
+        ast_print_type(c_type, opt-&gt;strtab));
+    }
+  }
+}</code></pre>
+  </div>
+
+  <div class="option-card">
+    <div class="option-header">
+      <span class="option-name">B. Flag the synthetic recover</span>
+      <span class="badge badge-med">Medium effort</span>
+      <span class="badge badge-low">Low maintenance</span>
+    </div>
+    <p>
+      Add an <code>AST_FLAG_AUTO_RECOVER</code> flag. Set it on the synthetic
+      <code>TK_RECOVER</code> node created in <code>expr_pre_array()</code>. In
+      <code>expr_localref()</code>, when lowering a cap inside a flagged recover, set a
+      companion flag on the variable reference node. At the error site in
+      <code>expr_array()</code>, check the flag and add the explanation.
+    </p>
+    <div class="detail-grid">
+      <span class="detail-label">Files changed</span>
+      <span class="detail-value">3 &mdash; <code>ast.h</code>, <code>array.c</code>, <code>reference.c</code></span>
+      <span class="detail-label">Lines added</span>
+      <span class="detail-value">~25</span>
+      <span class="detail-label">New infra</span>
+      <span class="detail-value">2 AST flag bits (13 of 32 bits remain after this)</span>
+      <span class="detail-label">Coverage</span>
+      <span class="detail-value">
+        Any element expression, not just bare variable references &mdash; the flag
+        propagates through the reference node regardless of surrounding expression
+        structure.
+      </span>
+      <span class="detail-label">Maintenance</span>
+      <span class="detail-value">
+        Low. The flag is set in one place and read in one place. The main risk is
+        AST flag bit exhaustion &mdash; the enum is a 32-bit int and 19 bits are
+        already used. Each new flag gets us closer to needing a wider type.
+      </span>
+    </div>
+  </div>
+
+  <div class="option-card">
+    <div class="option-header">
+      <span class="option-name">C. Store original type before lowering</span>
+      <span class="badge badge-high">High effort</span>
+      <span class="badge badge-med">Medium maintenance</span>
+    </div>
+    <p>
+      Before <code>set_cap_and_ephemeral()</code> in <code>expr_localref()</code>,
+      stash the original type on the reference AST node (e.g., as an extra child or
+      via a side table). At the error site, retrieve it and include both the original
+      and lowered types in the message.
+    </p>
+    <div class="detail-grid">
+      <span class="detail-label">Files changed</span>
+      <span class="detail-value">3+ &mdash; <code>reference.c</code>, <code>array.c</code>, possibly <code>ast.h</code> or a new header</span>
+      <span class="detail-label">Lines added</span>
+      <span class="detail-value">~40&ndash;60</span>
+      <span class="detail-label">New infra</span>
+      <span class="detail-value">
+        Type stashing mechanism &mdash; either extra AST children (changes the node
+        shape, must be handled by every AST walker) or a side hash table (must be
+        allocated and freed with the pass context).
+      </span>
+      <span class="detail-label">Coverage</span>
+      <span class="detail-value">
+        Complete. Any expression whose type was lowered, any reason for the lowering.
+        Could also serve future improvements for explicit recover blocks.
+      </span>
+      <span class="detail-label">Maintenance</span>
+      <span class="detail-value">
+        Medium. Extra AST children change the shape that every pass and visitor
+        expects. A side table needs lifecycle management. Either adds an invariant
+        that future changes must respect.
+      </span>
+    </div>
+  </div>
+
+  <h2>Comparison</h2>
+  <div style="overflow-x: auto;">
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>Option</th>
+          <th>Files</th>
+          <th>Lines</th>
+          <th>New infra</th>
+          <th>Coverage</th>
+          <th>Maintenance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A. Reconstruct</strong></td>
+          <td>1</td>
+          <td>~15</td>
+          <td>None</td>
+          <td>Bare refs only</td>
+          <td>Near zero</td>
+        </tr>
+        <tr>
+          <td><strong>B. Flag</strong></td>
+          <td>3</td>
+          <td>~25</td>
+          <td>2 flag bits</td>
+          <td>All expressions</td>
+          <td>Low</td>
+        </tr>
+        <tr>
+          <td><strong>C. Stash type</strong></td>
+          <td>3+</td>
+          <td>~40&ndash;60</td>
+          <td>Stashing mechanism</td>
+          <td>Complete</td>
+          <td>Medium</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Recommendation.</strong>&ensp;Option A covers the case from the issue
+    (and likely the vast majority of real-world occurrences &mdash; array elements are
+    almost always bare variable references or constructor calls), touches one file,
+    adds no new infrastructure, and has effectively no ongoing maintenance cost.
+    Option B is the natural next step if broader coverage proves necessary.
+  </div>
+
+  <h2>What each option does not cover</h2>
+  <p>
+    All three options address the array literal auto-recover case only. The same silent
+    lowering happens when a user writes an explicit <code>recover</code> block, and the
+    resulting error is equally confusing. None of these options improve that case &mdash;
+    but the explicit recover case is less surprising because the user wrote the recover
+    themselves and can reason about it. The auto-recover case is worse because the user
+    doesn't know a recover exists.
+  </p>
+  <p>
+    Method call auto-recovery (in <code>call.c</code>) is a separate mechanism with its
+    own error messages that already include hints like &ldquo;this would be possible if
+    the receiver were more ephemeral.&rdquo; It isn't affected by this change.
+  </p>
+
+  <h2>Existing precedent</h2>
+  <p>
+    The compiler already has explanatory hints in the same error infrastructure. The
+    pattern is an <code>ast_error_frame()</code> call appended to the errorframe chain,
+    producing an indented info line. Examples:
+  </p>
+  <ul>
+    <li>
+      <span class="file-ref">subtype.c:83&ndash;87</span> &mdash;
+      &ldquo;this would be possible if the subcap were more ephemeral. Perhaps you
+      meant to consume this variable&rdquo;
+    </li>
+    <li>
+      <span class="file-ref">subtype.c:89&ndash;103</span> &mdash;
+      explains what a generic capability stands for and why a subcap check fails
+      against it
+    </li>
+    <li>
+      <span class="file-ref">reference.c:578&ndash;584</span> &mdash;
+      &ldquo;can&rsquo;t access a non-sendable local defined outside of a recover
+      expression&rdquo; with &ldquo;this would be possible if the local wasn&rsquo;t
+      assigned to&rdquo;
+    </li>
+    <li>
+      <span class="file-ref">call.c:740</span> &mdash;
+      &ldquo;this would be possible if the receiver were more ephemeral. Perhaps
+      you should consume it&rdquo;
+    </li>
+  </ul>
+  <p>
+    All of these use the <code>errorframe_t</code> chain. None of them currently
+    explain auto-recovery. The proposed change would be the first to do so.
+  </p>
+</div>
+
+</body>
+</html>
