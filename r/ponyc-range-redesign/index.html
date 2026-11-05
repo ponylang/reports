@@ -341,9 +341,9 @@ a.type-link:hover { border-bottom-style: solid; }
     Replace <code>Range</code> and <code>Reverse</code> with a single <code>Range</code> type using two named constructors &mdash; <code>till</code> (exclusive) and <code>through</code> (inclusive) &mdash; with direction inferred from argument order and empty-range semantics for invalid inputs.
   </div>
   <div class="stats">
-    <span>45 files changed</span>
-    <span style="color:var(--added-fg)">+521</span>
-    <span style="color:var(--removed-fg)">&minus;561</span>
+    <span>46 files changed</span>
+    <span style="color:var(--added-fg)">+601</span>
+    <span style="color:var(--removed-fg)">&minus;563</span>
   </div>
 </section>
 
@@ -365,11 +365,11 @@ a.type-link:hover { border-bottom-style: solid; }
     </div>
     <div class="panel-body">
       <ul class="file-list">
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/collections/range.pony" target="_blank" rel="noopener">packages/collections/range.pony</a> <span class="stat"><span class="stat-add">+209</span> <span class="stat-del">&minus;149</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/collections/range.pony" target="_blank" rel="noopener">packages/collections/range.pony</a> <span class="stat"><span class="stat-add">+98</span> <span class="stat-del">&minus;107</span></span></li>
         <li><span class="deleted">packages/collections/reverse.pony</span> <span class="stat"><span class="stat-del">&minus;53</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/collections/collections.pony" target="_blank" rel="noopener">packages/collections/collections.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;3</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/collections/persistent/_range_alias.pony" target="_blank" rel="noopener">packages/collections/persistent/_range_alias.pony</a> <span class="stat"><span class="stat-add">+3</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/.release-notes/redesign-range.md" target="_blank" rel="noopener">.release-notes/redesign-range.md</a> <span class="stat"><span class="stat-add">+37</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/collections/collections.pony" target="_blank" rel="noopener">packages/collections/collections.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/collections/persistent/_range_alias.pony" target="_blank" rel="noopener">packages/collections/persistent/_range_alias.pony</a> <span class="stat"><span class="stat-add">+3</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/.release-notes/redesign-range.md" target="_blank" rel="noopener">.release-notes/redesign-range.md</a> <span class="stat"><span class="stat-add">+49</span></span></li>
       </ul>
     </div>
   </div>
@@ -379,15 +379,16 @@ a.type-link:hover { border-bottom-style: solid; }
     <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
       <span class="arrow">&#9654;</span>
       <span class="file-group-label">Tests</span>
-      <span class="file-count">5 files</span>
+      <span class="file-count">6 files</span>
     </div>
     <div class="panel-body">
       <ul class="file-list">
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/collections/_test.pony" target="_blank" rel="noopener">packages/collections/_test.pony</a> <span class="stat"><span class="stat-add">+193</span> <span class="stat-del">&minus;194</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/collections/persistent/_test.pony" target="_blank" rel="noopener">packages/collections/persistent/_test.pony</a> <span class="stat"><span class="stat-add">+41</span> <span class="stat-del">&minus;49</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/itertools/_test.pony" target="_blank" rel="noopener">packages/itertools/_test.pony</a> <span class="stat"><span class="stat-add">+25</span> <span class="stat-del">&minus;14</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/random/_test.pony" target="_blank" rel="noopener">packages/random/_test.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/builtin_test/_test.pony" target="_blank" rel="noopener">packages/builtin_test/_test.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/collections/_test.pony" target="_blank" rel="noopener">packages/collections/_test.pony</a> <span class="stat"><span class="stat-add">+234</span> <span class="stat-del">&minus;208</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/collections/persistent/_test.pony" target="_blank" rel="noopener">packages/collections/persistent/_test.pony</a> <span class="stat"><span class="stat-add">+48</span> <span class="stat-del">&minus;42</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/itertools/_test.pony" target="_blank" rel="noopener">packages/itertools/_test.pony</a> <span class="stat"><span class="stat-add">+29</span> <span class="stat-del">&minus;21</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/random/_test.pony" target="_blank" rel="noopener">packages/random/_test.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/builtin_test/_test.pony" target="_blank" rel="noopener">packages/builtin_test/_test.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/encode/base64/_test.pony" target="_blank" rel="noopener">packages/encode/base64/_test.pony</a> <span class="stat"><span class="stat-add">+3</span> <span class="stat-del">&minus;3</span></span></li>
       </ul>
     </div>
   </div>
@@ -397,26 +398,26 @@ a.type-link:hover { border-bottom-style: solid; }
     <div class="panel-header" onclick="this.parentElement.classList.toggle('open')">
       <span class="arrow">&#9654;</span>
       <span class="file-group-label">Stdlib call-site migrations</span>
-      <span class="file-count">17 files</span>
+      <span class="file-count">16 files</span>
     </div>
     <div class="panel-body">
       <ul class="file-list">
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/collections/list.pony" target="_blank" rel="noopener">packages/collections/list.pony</a> <span class="stat"><span class="stat-add">+5</span> <span class="stat-del">&minus;5</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/collections/map.pony" target="_blank" rel="noopener">packages/collections/map.pony</a> <span class="stat"><span class="stat-add">+3</span> <span class="stat-del">&minus;3</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/collections/persistent/_map_node.pony" target="_blank" rel="noopener">packages/collections/persistent/_map_node.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/collections/persistent/vec.pony" target="_blank" rel="noopener">packages/collections/persistent/vec.pony</a> <span class="stat"><span class="stat-add">+14</span> <span class="stat-del">&minus;9</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/collections/persistent/benchmarks/main.pony" target="_blank" rel="noopener">packages/collections/persistent/benchmarks/main.pony</a> <span class="stat"><span class="stat-add">+3</span> <span class="stat-del">&minus;3</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/buffered/reader.pony" target="_blank" rel="noopener">packages/buffered/reader.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/encode/base64/base64.pony" target="_blank" rel="noopener">packages/encode/base64/base64.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/files/_non_root_test.pony" target="_blank" rel="noopener">packages/files/_non_root_test.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/files/file.pony" target="_blank" rel="noopener">packages/files/file.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/format/format.pony" target="_blank" rel="noopener">packages/format/format.pony</a> <span class="stat"><span class="stat-add">+8</span> <span class="stat-del">&minus;8</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/itertools/iter.pony" target="_blank" rel="noopener">packages/itertools/iter.pony</a> <span class="stat"><span class="stat-add">+6</span> <span class="stat-del">&minus;6</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/pony_bench/_results.pony" target="_blank" rel="noopener">packages/pony_bench/_results.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/pony_test/_random_case.pony" target="_blank" rel="noopener">packages/pony_test/_random_case.pony</a> <span class="stat"><span class="stat-add">+40</span> <span class="stat-del">&minus;40</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/runtime_info/runtime_info.pony" target="_blank" rel="noopener">packages/runtime_info/runtime_info.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/time/_timing_wheel.pony" target="_blank" rel="noopener">packages/time/_timing_wheel.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/packages/time/timers.pony" target="_blank" rel="noopener">packages/time/timers.pony</a> <span class="stat"><span class="stat-add">+3</span> <span class="stat-del">&minus;3</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/collections/list.pony" target="_blank" rel="noopener">packages/collections/list.pony</a> <span class="stat"><span class="stat-add">+5</span> <span class="stat-del">&minus;5</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/collections/map.pony" target="_blank" rel="noopener">packages/collections/map.pony</a> <span class="stat"><span class="stat-add">+3</span> <span class="stat-del">&minus;3</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/collections/persistent/_map_node.pony" target="_blank" rel="noopener">packages/collections/persistent/_map_node.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/collections/persistent/vec.pony" target="_blank" rel="noopener">packages/collections/persistent/vec.pony</a> <span class="stat"><span class="stat-add">+12</span> <span class="stat-del">&minus;11</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/collections/persistent/benchmarks/main.pony" target="_blank" rel="noopener">packages/collections/persistent/benchmarks/main.pony</a> <span class="stat"><span class="stat-add">+4</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/buffered/reader.pony" target="_blank" rel="noopener">packages/buffered/reader.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/encode/base64/base64.pony" target="_blank" rel="noopener">packages/encode/base64/base64.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/files/_non_root_test.pony" target="_blank" rel="noopener">packages/files/_non_root_test.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/files/file.pony" target="_blank" rel="noopener">packages/files/file.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/format/format.pony" target="_blank" rel="noopener">packages/format/format.pony</a> <span class="stat"><span class="stat-add">+10</span> <span class="stat-del">&minus;6</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/itertools/iter.pony" target="_blank" rel="noopener">packages/itertools/iter.pony</a> <span class="stat"><span class="stat-add">+6</span> <span class="stat-del">&minus;6</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/pony_bench/_results.pony" target="_blank" rel="noopener">packages/pony_bench/_results.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/pony_test/_random_case.pony" target="_blank" rel="noopener">packages/pony_test/_random_case.pony</a> <span class="stat"><span class="stat-add">+40</span> <span class="stat-del">&minus;40</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/runtime_info/runtime_info.pony" target="_blank" rel="noopener">packages/runtime_info/runtime_info.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/time/_timing_wheel.pony" target="_blank" rel="noopener">packages/time/_timing_wheel.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/packages/time/timers.pony" target="_blank" rel="noopener">packages/time/timers.pony</a> <span class="stat"><span class="stat-add">+3</span> <span class="stat-del">&minus;3</span></span></li>
       </ul>
     </div>
   </div>
@@ -430,9 +431,9 @@ a.type-link:hover { border-bottom-style: solid; }
     </div>
     <div class="panel-body">
       <ul class="file-list">
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/tools/pony-doc/extractor.pony" target="_blank" rel="noopener">tools/pony-doc/extractor.pony</a> <span class="stat"><span class="stat-add">+3</span> <span class="stat-del">&minus;3</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/tools/pony-lsp/language_server.pony" target="_blank" rel="noopener">tools/pony-lsp/language_server.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/tools/lib/ponylang/pony_compiler/tests/main.pony" target="_blank" rel="noopener">tools/lib/ponylang/pony_compiler/tests/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/tools/pony-doc/extractor.pony" target="_blank" rel="noopener">tools/pony-doc/extractor.pony</a> <span class="stat"><span class="stat-add">+3</span> <span class="stat-del">&minus;3</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/tools/pony-lsp/language_server.pony" target="_blank" rel="noopener">tools/pony-lsp/language_server.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/tools/lib/ponylang/pony_compiler/tests/main.pony" target="_blank" rel="noopener">tools/lib/ponylang/pony_compiler/tests/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
       </ul>
     </div>
   </div>
@@ -446,20 +447,20 @@ a.type-link:hover { border-bottom-style: solid; }
     </div>
     <div class="panel-body">
       <ul class="file-list">
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/actors/counter/main.pony" target="_blank" rel="noopener">examples/actors/counter/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/actors/mailbox/main.pony" target="_blank" rel="noopener">examples/actors/mailbox/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/actors/message-ubench/main.pony" target="_blank" rel="noopener">examples/actors/message-ubench/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/actors/mixed/main.pony" target="_blank" rel="noopener">examples/actors/mixed/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/actors/ring/main.pony" target="_blank" rel="noopener">examples/actors/ring/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/actors/yield/main.pony" target="_blank" rel="noopener">examples/actors/yield/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/benchmarks/gups_basic/main.pony" target="_blank" rel="noopener">examples/benchmarks/gups_basic/main.pony</a> <span class="stat"><span class="stat-add">+7</span> <span class="stat-del">&minus;7</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/benchmarks/gups_opt/main.pony" target="_blank" rel="noopener">examples/benchmarks/gups_opt/main.pony</a> <span class="stat"><span class="stat-add">+7</span> <span class="stat-del">&minus;7</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/benchmarks/mandelbrot/main.pony" target="_blank" rel="noopener">examples/benchmarks/mandelbrot/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/getting-started/circle/main.pony" target="_blank" rel="noopener">examples/getting-started/circle/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/networking/backpressure/overload/main.pony" target="_blank" rel="noopener">examples/networking/backpressure/overload/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/examples/testing/property_testing/collection_generators.pony" target="_blank" rel="noopener">examples/testing/property_testing/collection_generators.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/benchmarks/backpressure/overload/main.pony" target="_blank" rel="noopener">benchmarks/backpressure/overload/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/benchmarks/performance/message-ubench/main.pony" target="_blank" rel="noopener">benchmarks/performance/message-ubench/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/actors/counter/main.pony" target="_blank" rel="noopener">examples/actors/counter/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/actors/mailbox/main.pony" target="_blank" rel="noopener">examples/actors/mailbox/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/actors/message-ubench/main.pony" target="_blank" rel="noopener">examples/actors/message-ubench/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/actors/mixed/main.pony" target="_blank" rel="noopener">examples/actors/mixed/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/actors/ring/main.pony" target="_blank" rel="noopener">examples/actors/ring/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/actors/yield/main.pony" target="_blank" rel="noopener">examples/actors/yield/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/benchmarks/gups_basic/main.pony" target="_blank" rel="noopener">examples/benchmarks/gups_basic/main.pony</a> <span class="stat"><span class="stat-add">+7</span> <span class="stat-del">&minus;7</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/benchmarks/gups_opt/main.pony" target="_blank" rel="noopener">examples/benchmarks/gups_opt/main.pony</a> <span class="stat"><span class="stat-add">+7</span> <span class="stat-del">&minus;7</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/benchmarks/mandelbrot/main.pony" target="_blank" rel="noopener">examples/benchmarks/mandelbrot/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/getting-started/circle/main.pony" target="_blank" rel="noopener">examples/getting-started/circle/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/networking/backpressure/overload/main.pony" target="_blank" rel="noopener">examples/networking/backpressure/overload/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/examples/testing/property_testing/collection_generators.pony" target="_blank" rel="noopener">examples/testing/property_testing/collection_generators.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/benchmarks/macro/backpressure/overload/main.pony" target="_blank" rel="noopener">benchmarks/macro/backpressure/overload/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/benchmarks/macro/performance/message-ubench/main.pony" target="_blank" rel="noopener">benchmarks/macro/performance/message-ubench/main.pony</a> <span class="stat"><span class="stat-add">+2</span> <span class="stat-del">&minus;2</span></span></li>
       </ul>
     </div>
   </div>
@@ -473,8 +474,8 @@ a.type-link:hover { border-bottom-style: solid; }
     </div>
     <div class="panel-body">
       <ul class="file-list">
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/test/full-program-runner/_coordinator.pony" target="_blank" rel="noopener">test/full-program-runner/_coordinator.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
-        <li><a href="https://github.com/ponylang/ponyc/blob/047ad4fd4/test/full-program-tests/regression-1222/main.pony" target="_blank" rel="noopener">test/full-program-tests/regression-1222/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/test/full-program-runner/_coordinator.pony" target="_blank" rel="noopener">test/full-program-runner/_coordinator.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
+        <li><a href="https://github.com/ponylang/ponyc/blob/3151909b0/test/full-program-tests/regression-1222/main.pony" target="_blank" rel="noopener">test/full-program-tests/regression-1222/main.pony</a> <span class="stat"><span class="stat-add">+1</span> <span class="stat-del">&minus;1</span></span></li>
       </ul>
     </div>
   </div>
@@ -484,13 +485,19 @@ a.type-link:hover { border-bottom-style: solid; }
   <h2>Behavioral Changes</h2>
 
   <h3>Named constructors replace default constructor</h3>
-  <p><code>Range(0, 10)</code> no longer compiles. Use <code>Range.till(0, 10)</code> for exclusive or <code>Range.through(0, 10)</code> for inclusive.</p>
+  <p><code>Range(0, 10)</code> no longer compiles. Use <code>Range[USize].till(0, 10)</code> for exclusive or <code>Range[USize].through(0, 10)</code> for inclusive.</p>
+
+  <h3>Explicit type parameter required</h3>
+  <p>The type parameter no longer defaults to <code>USize</code>. Every call site must name the numeric type: <code>Range[USize]</code>, <code>Range[I32]</code>, <code>Range[F64]</code>, etc.</p>
 
   <h3>Reverse removed</h3>
   <p><code>Reverse</code> is deleted. Use <code>Range.through(high, low)</code> or <code>Range.till(high, low)</code> instead &mdash; direction is inferred when <code>from &gt; to</code>.</p>
 
   <h3>Direction inference</h3>
   <p>When <code>from &lt; to</code> the range ascends. When <code>from &gt; to</code> it descends. Step is always a positive magnitude &mdash; no more negative increments.</p>
+
+  <h3>Migration hazard: empty ranges that now descend</h3>
+  <p>The old <code>Range(a, b)</code> produced an empty range when <code>a &gt; b</code>. The new <code>Range[T].till(a, b)</code> infers a descending range instead. Code that passed dynamic bounds and relied on the empty-when-no-progress behavior needs an explicit <code>if from &lt; to</code> guard.</p>
 
   <h3>Empty ranges on bad inputs</h3>
   <p>Constructors are non-partial. A zero or negative step, or non-finite float arguments, produce an empty range instead of erroring. <code>rewind()</code> cannot resurrect a range made empty by bad inputs.</p>
@@ -524,7 +531,7 @@ a.type-link:hover { border-bottom-style: solid; }
         </div>
         <div class="after">
           <label>After</label>
-<pre>class Range[A: (Real[A] val &amp; Number) = USize]
+<pre>class Range[A: (Real[A] val &amp; Number)]
   is Iterator[A]
 
   new through(from: A, to: A, step: A = 1)
@@ -574,7 +581,7 @@ for e in Range.through(10, 0) do ... end</pre>
     <div class="type-block-header">
       <span class="badge badge-changed">Changed</span>
       <span class="type-kind">class</span>
-      <span class="type-name">Range[A: (Real[A] val &amp; Number) = USize] is Iterator[A]</span>
+      <span class="type-name">Range[A: (Real[A] val &amp; Number)] is Iterator[A]</span>
     </div>
     <div class="type-body">
       <div class="type-doc">A bounded numeric sequence with a given step size. Two named constructors control whether the far bound is included. Direction is inferred: when <code>from &lt; to</code> the range ascends, when <code>from &gt; to</code> it descends. Step is always a positive magnitude. A zero or negative step, or a non-finite float argument (NaN or infinity), produces an empty range.</div>
@@ -586,7 +593,7 @@ for e in Range.through(10, 0) do ... end</pre>
           <div style="font-family:Inter,sans-serif; font-size:12px; color:var(--muted); margin-top:2px">Exclusive of the far bound. <code>Range.till(0, 3)</code> yields 0, 1, 2. <code>Range.till(3, 0)</code> yields 3, 2, 1. <code>Range.till(5, 5)</code> yields nothing.</div>
         </li>
         <li><span class="method-kind">fun</span> has_next(): Bool
-          <div style="font-family:Inter,sans-serif; font-size:12px; color:var(--muted); margin-top:2px">True when the iterator has not yet reached the far bound.</div>
+          <div style="font-family:Inter,sans-serif; font-size:12px; color:var(--muted); margin-top:2px">True while there are values remaining in the sequence.</div>
         </li>
         <li><span class="method-kind">fun ref</span> next(): A ?
           <div style="font-family:Inter,sans-serif; font-size:12px; color:var(--muted); margin-top:2px">Return the current value and advance. Errors when exhausted.</div>
@@ -658,9 +665,16 @@ for e in Range.through(10, 0) do ... end</pre>
 <section id="release-notes">
   <h2>Release Notes</h2>
   <div class="release-notes-content">
-    <h3>Redesign Range with through and till constructors, remove Reverse</h3>
-    <p><code>Range</code> has been redesigned with two named constructors, and <code>Reverse</code> has been removed. <code>Range.till(from, to)</code> excludes the far bound; <code>Range.through(from, to)</code> includes it. Direction is inferred from the arguments, and the step is always a positive magnitude. A zero or negative step, or a non-finite float argument, produces an empty range. Use <code>Range.through</code> or <code>Range.till</code> with <code>from &gt; to</code> for descending ranges.</p>
+    <h3>Redesign Range API</h3>
+    <p><code>Range</code> has been redesigned with two named constructors, and <code>Reverse</code> has been removed. <code>Range[T].till(from, to)</code> excludes the far bound; <code>Range[T].through(from, to)</code> includes it. Direction is inferred from the arguments, and the step is always a positive magnitude. A zero or negative step, or a non-finite float argument, produces an empty range.</p>
+    <p>The type parameter no longer defaults to <code>USize</code> &mdash; every call site must name the numeric type explicitly.</p>
     <p><code>is_empty()</code> and <code>is_infinite()</code> have been removed. Infinite ranges are no longer supported.</p>
+    <p>The old <code>Range(a, b)</code> produced an empty range when <code>a &gt; b</code>. The new <code>Range[T].till(a, b)</code> infers a descending range instead. Code that passed dynamic bounds and relied on the empty-when-no-progress behavior needs an explicit guard:</p>
+<pre>// Old: Range(start, limit) was empty when start >= limit
+// New: Range[USize].till(start, limit) descends when start > limit
+if start &lt; limit then
+  for i in Range[USize].till(start, limit) do ... end
+end</pre>
 
     <p>Before:</p>
 <pre>// ascending, exclusive of 10
@@ -677,16 +691,16 @@ for e in Reverse(10, 0, 3) do ... end</pre>
 
     <p>After:</p>
 <pre>// ascending, exclusive of 10
-for i in Range.till(0, 10) do ... end
+for i in Range[USize].till(0, 10) do ... end
 
 // ascending with step
-for i in Range.till(0, 10, 2) do ... end
+for i in Range[USize].till(0, 10, 2) do ... end
 
 // descending, inclusive of both endpoints
-for e in Range.through(10, 0) do ... end
+for e in Range[USize].through(10, 0) do ... end
 
 // descending with step
-for e in Range.through(10, 0, 3) do ... end</pre>
+for e in Range[USize].through(10, 0, 3) do ... end</pre>
   </div>
 </section>
 
