@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ponyc #6674 | Generator size and content properties</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #fafaf9;
+  --fg: #1c1917;
+  --muted: #78716c;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --border: #e7e5e4;
+  --code-bg: #f5f5f4;
+  --added-bg: #dcfce7;
+  --added-fg: #166534;
+  --removed-bg: #fee2e2;
+  --removed-fg: #991b1b;
+  --card-bg: #ffffff;
+  --nav-bg: #1c1917;
+  --nav-fg: #d6d3d1;
+  --nav-active: #60a5fa;
+  --diagram-node: #e0e7ff;
+  --diagram-edge: #6366f1;
+  --diagram-highlight: #f59e0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0a09;
+    --fg: #e7e5e4;
+    --muted: #a8a29e;
+    --accent: #60a5fa;
+    --accent-soft: #1e3a5f;
+    --border: #292524;
+    --code-bg: #1c1917;
+    --added-bg: #052e16;
+    --added-fg: #86efac;
+    --removed-bg: #450a0a;
+    --removed-fg: #fca5a5;
+    --card-bg: #1c1917;
+    --nav-bg: #0c0a09;
+    --nav-fg: #a8a29e;
+    --nav-active: #60a5fa;
+    --diagram-node: #312e81;
+    --diagram-edge: #818cf8;
+    --diagram-highlight: #fbbf24;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c0a09;
+  --fg: #e7e5e4;
+  --muted: #a8a29e;
+  --accent: #60a5fa;
+  --accent-soft: #1e3a5f;
+  --border: #292524;
+  --code-bg: #1c1917;
+  --added-bg: #052e16;
+  --added-fg: #86efac;
+  --removed-bg: #450a0a;
+  --removed-fg: #fca5a5;
+  --card-bg: #1c1917;
+  --nav-bg: #0c0a09;
+  --nav-fg: #a8a29e;
+  --nav-active: #60a5fa;
+  --diagram-node: #312e81;
+  --diagram-edge: #818cf8;
+  --diagram-highlight: #fbbf24;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Nav rail --- */
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100vh;
+  background: var(--nav-bg);
+  color: var(--nav-fg);
+  padding: 24px 0;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+nav .pr-label {
+  padding: 0 16px 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+nav .pr-title {
+  padding: 0 16px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.4;
+}
+
+nav ul { list-style: none; padding: 12px 0; margin: 0; flex: 1; }
+
+nav a {
+  display: block;
+  padding: 7px 16px 7px 20px;
+  color: var(--nav-fg);
+  text-decoration: none;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+nav a:hover { background: rgba(255,255,255,0.05); }
+
+nav a.active {
+  color: var(--nav-active);
+  background: rgba(96,165,250,0.08);
+}
+
+nav a.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 4px; bottom: 4px;
+  width: 3px;
+  background: var(--nav-active);
+  border-radius: 0 2px 2px 0;
+}
+
+nav .kbd-help {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+
+kbd {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* --- Main content --- */
+
+main {
+  margin-left: 220px;
+  padding: 32px 48px;
+  max-width: 860px;
+}
+
+section { margin-bottom: 48px; scroll-margin-top: 24px; }
+
+h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; text-wrap: balance; }
+h2 { font-size: 17px; font-weight: 600; margin-bottom: 16px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); display: inline-block; }
+h3 { font-size: 15px; font-weight: 600; margin: 20px 0 10px; }
+p { margin-bottom: 12px; }
+
+/* --- Components --- */
+
+.summary-box {
+  background: var(--accent-soft);
+  border-left: 4px solid var(--accent);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  border-radius: 0 6px 6px 0;
+  font-size: 14px;
+}
+
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  font-size: 14px;
+}
+
+.panel-header:hover { background: rgba(0,0,0,0.02); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .panel-header:hover { background: rgba(255,255,255,0.03); }
+}
+:root[data-theme="dark"] .panel-header:hover { background: rgba(255,255,255,0.03); }
+
+.panel-header .arrow { transition: transform 0.2s; font-size: 10px; color: var(--muted); flex-shrink: 0; }
+.panel.open .arrow { transform: rotate(90deg); }
+
+.panel-body { display: none; padding: 0 14px 14px; border-top: 1px solid var(--border); }
+.panel.open .panel-body { display: block; padding-top: 14px; }
+
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.badge-removed { background: var(--removed-bg); color: var(--removed-fg); }
+.badge-added { background: var(--added-bg); color: var(--added-fg); }
+.badge-changed { background: var(--accent-soft); color: var(--accent); }
+
+.sig { font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-width: 0; }
+
+.before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.before-after > div { border-radius: 5px; overflow: hidden; min-width: 0; }
+.before-after label { display: block; padding: 3px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.before-after .before label { background: var(--removed-bg); color: var(--removed-fg); }
+.before-after .after label { background: var(--added-bg); color: var(--added-fg); }
+
+pre { background: var(--code-bg); padding: 10px 14px; border-radius: 5px; overflow-x: auto; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; }
+.before-after pre { border-radius: 0 0 5px 5px; margin: 0; }
+
+code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+
+/* --- File map --- */
+
+.file-group-label { font-weight: 600; font-size: 13px; }
+.file-count { font-size: 12px; color: var(--muted); }
+.file-list { list-style: none; padding-left: 18px; }
+.file-list li { padding: 3px 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+.file-list a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+.file-list a:hover { color: var(--accent); text-decoration: underline; }
+.file-list .stat { font-size: 11px; margin-left: 6px; }
+.file-list .stat-add { color: var(--added-fg); }
+.file-list .stat-del { color: var(--removed-fg); }
+
+.stats { display: flex; gap: 16px; font-size: 13px; color: var(--muted); margin-bottom: 4px; flex-wrap: wrap; }
+
+/* --- Diagrams --- */
+
+.diagram-container { margin: 16px 0; padding: 20px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; overflow-x: auto; }
+.diagram-container svg { display: block; margin: 0 auto; }
+svg text { font-family: 'Inter', sans-serif; fill: var(--fg); }
+
+/* --- API surface --- */
+
+.type-block { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+.type-block-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.type-kind { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); flex-shrink: 0; }
+.type-name { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; min-width: 0; }
+.type-body { padding: 12px 14px; }
+.type-doc { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+.method-list { list-style: none; padding: 0; margin: 0; }
+.method-list li { padding: 6px 0; border-top: 1px solid var(--border); font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; }
+.method-list li:first-child { border-top: none; }
+.method-kind { color: var(--accent); font-weight: 600; font-size: 11px; }
+
+/* --- Type navigation links --- */
+
+a.type-link { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+a.type-link:hover { border-bottom-style: solid; }
+
+/* --- Release notes --- */
+
+.release-notes-content { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; font-size: 14px; line-height: 1.6; }
+.release-notes-content h3 { font-size: 15px; margin: 0 0 8px; }
+.release-notes-content p { margin-bottom: 8px; }
+.release-notes-content p:last-child { margin-bottom: 0; }
+.release-notes-content ul { margin: 8px 0 8px 20px; }
+.release-notes-content li { margin-bottom: 4px; }
+
+/* --- Responsive --- */
+
+@media (max-width: 768px) {
+  nav { position: static; width: 100%; height: auto; padding: 12px 16px; }
+  nav ul { display: flex; flex-wrap: wrap; gap: 2px; padding: 8px 0; }
+  nav li { flex: none; }
+  nav a { padding: 5px 10px; font-size: 12px; border-radius: 4px; }
+  nav a.active::before { display: none; }
+  nav .kbd-help { display: none; }
+  main { margin-left: 0; padding: 16px; }
+  .before-after { grid-template-columns: 1fr; }
+}
+
+* { box-sizing: border-box; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+a { color: var(--accent); }
+details.panel .panel-header { display: list-item; list-style-position: inside; font-weight: 600; }
+details.panel[open] .panel-body { display: block; padding-top: 14px; }
+.table-scroll { overflow-x: auto; margin: 0 0 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+th { background: var(--code-bg); }
+td code { white-space: nowrap; }
+.file-list a { color: var(--accent); overflow-wrap: anywhere; }
+.add { color: var(--added-fg); }
+.remove { color: var(--removed-fg); }
+</style>
+</head>
+<body>
+<nav aria-label="Report sections">
+<div class="pr-label">ponylang/ponyc</div>
+<div class="pr-title">#6674 · Generator size and content properties</div>
+<ul>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#motivation">Motivation</a></li>
+<li><a href="#files">File Map</a></li>
+<li><a href="#architecture">Test Structure</a></li>
+<li><a href="#test-mappings">Legacy Test Mappings</a></li>
+<li><a href="#mutations">Mutation Results</a></li>
+</ul>
+<div class="kbd-help"><kbd>j</kbd> / <kbd>k</kbd> move between sections<br><kbd>Enter</kbd> expand current section<br><kbd>Esc</kbd> collapse panels</div>
+</nav>
+<main>
+<section id="summary">
+<h1>Generator size and content properties</h1>
+<div class="summary-box">Six properties replace 37 examples and exercise the size and content of 22 <code>pony_test</code> generator families.</div>
+<div class="stats">
+  <span>3 files changed</span><span class="add">+981</span><span class="remove">−629</span>
+</div>
+<p><a href="https://github.com/ponylang/ponyc/pull/6674">ponyc #6674</a> · <a href="https://github.com/ponylang/ponyc/commit/7ad061ef2354dec0753d3624ec549d06a1706d30"><code>7ad061ef23</code></a> · <code>pony-test-size-contract</code></p>
+</section>
+<section id="motivation">
+<h2>Motivation</h2>
+<p>Fixed boundary, duplicate, and retry cases run every time. Varying the seed exercises additional sizes and contents. The properties preserve the bounds and identity cases covered by the removed examples.</p>
+</section>
+<section id="files">
+<h2>File Map</h2>
+<details class="panel" open>
+<summary class="panel-header">Generator properties</summary>
+<div class="panel-body">
+<ul class="file-list">
+<li><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/_generator_size.pony">packages/pony_test/_generator_size.pony</a> <span class="stat stat-add">+975</span> <span class="stat stat-del">−0</span></li>
+</ul>
+</div>
+</details>
+<details class="panel" open>
+<summary class="panel-header">Test registration and replaced examples</summary>
+<div class="panel-body">
+<ul class="file-list">
+<li><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/_test.pony">packages/pony_test/_test.pony</a> <span class="stat stat-add">+6</span> <span class="stat stat-del">−37</span></li>
+<li><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/_random_case.pony">packages/pony_test/_random_case.pony</a> <span class="stat stat-add">+0</span> <span class="stat stat-del">−592</span></li>
+</ul>
+</div>
+</details>
+</section>
+<section id="architecture">
+<h2>Test Structure</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Generator properties">
+<table>
+<thead><tr><th scope="col">Property</th><th scope="col">Coverage</th></tr></thead>
+<tbody>
+<tr><td><code>Gen/size/small_bounds</code></td><td>All 25 ordered bound pairs from 0 through 4 for every generator family.</td></tr>
+<tr><td><code>Gen/size/large_bounds</code></td><td>Weighted small and large bounds up to 300, plus exact length 300.</td></tr>
+<tr><td><code>Gen/size/small_domains</code></td><td>Domains of one to six keys, repeated keys, value replacement, and the duplicate stall limit.</td></tr>
+<tr><td><code>Gen/size/extended_bounds</code></td><td>Fixed legacy inputs, maximum-size sweeps, and the full U8 set domain.</td></tr>
+<tr><td><code>Gen/size/content</code></td><td>Scripted sequence order, byte and code-point endpoints, and UTF-32 retry and reset cases.</td></tr>
+<tr><td><code>Gen/size/optional_continuation</code></td><td>Fixed seed witnesses for the decisions that extend a result past its minimum.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="test-mappings">
+<h2>Legacy Test Mappings</h2>
+<details class="panel" open>
+<summary class="panel-header">All 37 replaced examples</summary>
+<div class="panel-body">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Legacy tests and replacement properties">
+<table>
+<thead><tr><th scope="col">Former test</th><th scope="col">Property</th><th scope="col">Case run in every property run</th></tr></thead>
+<tbody>
+<tr><td><code>_SeqOfTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(0, 10)</td></tr>
+<tr><td><code>_SetOfTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(0, 1024) with the full 256-value U8 domain</td></tr>
+<tr><td><code>_SetOfMaxTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(0, to) for every to from 1 through 254</td></tr>
+<tr><td><code>_SetOfEmptyTest</code></td><td><code>Gen/size/small_bounds</code></td><td>(from, to) = (0, 0)</td></tr>
+<tr><td><code>_SetOfMinTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(1, 100)</td></tr>
+<tr><td><code>_SetIsOfIdentityTest</code></td><td><code>Gen/size/small_domains</code></td><td>(0, 100), two forced draws, then stop. Both draws return the same string object.</td></tr>
+<tr><td><code>_SetIsOfMinTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(1, 100)</td></tr>
+<tr><td><code>_MapOfEmptyTest</code></td><td><code>Gen/size/small_bounds</code></td><td>(from, to) = (0, 0)</td></tr>
+<tr><td><code>_MapOfMaxTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(0, to) for every to from 1 through 254</td></tr>
+<tr><td><code>_MapOfIdentityTest</code></td><td><code>Gen/size/small_domains</code></td><td>(0, 100), two forced draws, then stop. Both keys are separately allocated equal strings. The two values differ, and the second replaces the first.</td></tr>
+<tr><td><code>_MapOfMinTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(1, 100)</td></tr>
+<tr><td><code>_MapIsOfEmptyTest</code></td><td><code>Gen/size/small_bounds</code></td><td>(from, to) = (0, 0)</td></tr>
+<tr><td><code>_MapIsOfMaxTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(0, to) for every to from 1 through 254</td></tr>
+<tr><td><code>_MapIsOfIdentityTest</code></td><td><code>Gen/size/small_domains</code></td><td>(0, 100), two forced draws, then stop. Both draws return the same string object. The two values differ, and the second replaces the first.</td></tr>
+<tr><td><code>_MapIsOfMinTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(1, 100)</td></tr>
+<tr><td><code>_VecOfEmptyTest</code></td><td><code>Gen/size/small_bounds</code></td><td>(from, to) = (0, 0)</td></tr>
+<tr><td><code>_VecOfFromToReversedTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(10, 5)</td></tr>
+<tr><td><code>_VecOfMaxTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(0, to) for every to from 1 through 49</td></tr>
+<tr><td><code>_VecOfMinTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(1, 100)</td></tr>
+<tr><td><code>_PersistentListOfEmptyTest</code></td><td><code>Gen/size/small_bounds</code></td><td>(from, to) = (0, 0)</td></tr>
+<tr><td><code>_PersistentListOfMaxTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(0, to) for every to from 1 through 49</td></tr>
+<tr><td><code>_PersistentListOfMinTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(1, 100)</td></tr>
+<tr><td><code>_PersistentSetIsOfIdentityTest</code></td><td><code>Gen/size/small_domains</code></td><td>(0, 100), two forced draws, then stop. Both draws return the same string object.</td></tr>
+<tr><td><code>_PersistentSetOfEmptyTest</code></td><td><code>Gen/size/small_bounds</code></td><td>(from, to) = (0, 0)</td></tr>
+<tr><td><code>_PersistentSetOfMaxTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(0, to) for every to from 1 through 254</td></tr>
+<tr><td><code>_PersistentSetOfMinTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(1, 100)</td></tr>
+<tr><td><code>_PersistentSetIsOfEmptyTest</code></td><td><code>Gen/size/small_bounds</code></td><td>(from, to) = (0, 0)</td></tr>
+<tr><td><code>_PersistentSetIsOfMaxTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(0, to) for every to from 1 through 254</td></tr>
+<tr><td><code>_PersistentSetIsOfMinTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(1, 100)</td></tr>
+<tr><td><code>_PersistentMapOfIdentityTest</code></td><td><code>Gen/size/small_domains</code></td><td>(0, 100), two forced draws, then stop. Both keys are separately allocated equal strings. The two values differ, and the second replaces the first.</td></tr>
+<tr><td><code>_PersistentMapIsOfIdentityTest</code></td><td><code>Gen/size/small_domains</code></td><td>(0, 100), two forced draws, then stop. Both draws return the same string object. The two values differ, and the second replaces the first.</td></tr>
+<tr><td><code>_PersistentMapOfEmptyTest</code></td><td><code>Gen/size/small_bounds</code></td><td>(from, to) = (0, 0)</td></tr>
+<tr><td><code>_PersistentMapOfMaxTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(0, to) for every to from 1 through 254</td></tr>
+<tr><td><code>_PersistentMapOfMinTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(1, 100)</td></tr>
+<tr><td><code>_PersistentMapIsOfEmptyTest</code></td><td><code>Gen/size/small_bounds</code></td><td>(from, to) = (0, 0)</td></tr>
+<tr><td><code>_PersistentMapIsOfMaxTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(0, to) for every to from 1 through 254</td></tr>
+<tr><td><code>_PersistentMapIsOfMinTest</code></td><td><code>Gen/size/extended_bounds</code></td><td>(1, 100)</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</details>
+</section>
+<section id="mutations">
+<h2>Mutation Results</h2>
+<div class="summary-box">791 sites on x86-64 Linux. 660 killed, 129 survived, 2 timed out, and 0 without coverage.</div>
+<p>The unfiltered and filtered baselines covered the same 791 sites. Mutant subprocesses skipped the async-action timeout tests. Both full stdlib runs included them.</p>
+<p>71 in-scope survivors were equivalent. The other 15 had no in-process kill on this build. All 303 gap-closing kills and the seven former in-scope timeouts failed a property in each of three reruns.</p>
+<p>Full lint and the stdlib suite passed in both codegen modes. All 45 counterfactual checks fired.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Mutation outcome counts">
+<table>
+<thead><tr><th scope="col">Status</th><th scope="col">In scope</th><th scope="col">Out of scope</th></tr></thead>
+<tbody>
+<tr><td>Killed</td><td>609</td><td>51</td></tr>
+<tr><td>Survived</td><td>86</td><td>43</td></tr>
+<tr><td>Timeout</td><td>0</td><td>2</td></tr>
+<tr><td>NoCoverage</td><td>0</td><td>0</td></tr>
+</tbody>
+</table>
+</div>
+<details class="panel">
+<summary class="panel-header">86 classified in-scope survivors</summary>
+<div class="panel-body">
+<div class="table-scroll" tabindex="0" role="region" aria-label="In-scope survivor classifications">
+<table>
+<thead><tr><th scope="col">Location</th><th scope="col">Category</th><th scope="col">Original</th><th scope="col">Replacement</th><th scope="col">Classification</th><th scope="col">Reason</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L155"><code>gen_obj.pony:155:23</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L161"><code>gen_obj.pony:161:36</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L161"><code>gen_obj.pony:161:49</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L161"><code>gen_obj.pony:161:58</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>The only possible overflow requires a maximum-USize preallocation. The baseline cannot complete that allocation.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L166"><code>gen_obj.pony:166:29</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The size is below the representable upper bound before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L195"><code>gen_obj.pony:195:23</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L201"><code>gen_obj.pony:201:36</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L201"><code>gen_obj.pony:201:49</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L201"><code>gen_obj.pony:201:58</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>Only a zero-minimum, maximum-USize request can overflow. The bounded probe observed the same empty result with the original and mutant. Unsafe overflow is undefined, so this is not a global equivalence.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L206"><code>gen_obj.pony:206:29</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The size is below the representable upper bound before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L235"><code>gen_obj.pony:235:23</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L241"><code>gen_obj.pony:241:36</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L241"><code>gen_obj.pony:241:49</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L241"><code>gen_obj.pony:241:58</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>Only a zero-minimum, maximum-USize request can overflow. The bounded probe observed the same empty result with the original and mutant. Unsafe overflow is undefined, so this is not a global equivalence.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L246"><code>gen_obj.pony:246:29</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The size is below the representable upper bound before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L320"><code>gen_obj.pony:320:32</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L320"><code>gen_obj.pony:320:49</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The stall count starts at zero, increases by one, and resets to zero after growth. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L322"><code>gen_obj.pony:322:32</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L327"><code>gen_obj.pony:327:54</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>The only possible overflow requires a maximum-USize preallocation. The baseline cannot complete that allocation.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L332"><code>gen_obj.pony:332:32</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>le</code></td><td>Equivalent</td><td>Inserting or replacing an entry never decreases the size.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L333"><code>gen_obj.pony:333:31</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The stall counter is below 100 before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L371"><code>gen_obj.pony:371:32</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L371"><code>gen_obj.pony:371:49</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The stall count starts at zero, increases by one, and resets to zero after growth. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L373"><code>gen_obj.pony:373:32</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L378"><code>gen_obj.pony:378:54</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>The only possible overflow requires a maximum-USize preallocation. The baseline cannot complete that allocation.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L383"><code>gen_obj.pony:383:32</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>le</code></td><td>Equivalent</td><td>Inserting or replacing an entry never decreases the size.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L384"><code>gen_obj.pony:384:31</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The stall counter is below 100 before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L422"><code>gen_obj.pony:422:32</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L422"><code>gen_obj.pony:422:49</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The stall count starts at zero, increases by one, and resets to zero after growth. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L424"><code>gen_obj.pony:424:32</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L429"><code>gen_obj.pony:429:54</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>The only possible overflow requires a maximum-USize preallocation. The baseline cannot complete that allocation.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L435"><code>gen_obj.pony:435:32</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>le</code></td><td>Equivalent</td><td>Inserting or replacing an entry never decreases the size.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L436"><code>gen_obj.pony:436:31</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The stall counter is below 100 before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L474"><code>gen_obj.pony:474:32</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L474"><code>gen_obj.pony:474:49</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The stall count starts at zero, increases by one, and resets to zero after growth. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L476"><code>gen_obj.pony:476:32</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L481"><code>gen_obj.pony:481:54</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>The only possible overflow requires a maximum-USize preallocation. The baseline cannot complete that allocation.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L487"><code>gen_obj.pony:487:32</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>le</code></td><td>Equivalent</td><td>Inserting or replacing an entry never decreases the size.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L488"><code>gen_obj.pony:488:31</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The stall counter is below 100 before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L520"><code>gen_obj.pony:520:23</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L526"><code>gen_obj.pony:526:36</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L526"><code>gen_obj.pony:526:49</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L526"><code>gen_obj.pony:526:58</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>Only a zero-minimum, maximum-USize request can overflow. The bounded probe observed the same empty result with the original and mutant. Unsafe overflow is undefined, so this is not a global equivalence.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L530"><code>gen_obj.pony:530:29</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The size is below the representable upper bound before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L558"><code>gen_obj.pony:558:23</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L564"><code>gen_obj.pony:564:36</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L564"><code>gen_obj.pony:564:49</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L564"><code>gen_obj.pony:564:58</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>Only a zero-minimum, maximum-USize request can overflow. The bounded probe observed the same empty result with the original and mutant. Unsafe overflow is undefined, so this is not a global equivalence.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L568"><code>gen_obj.pony:568:29</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The size is below the representable upper bound before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L603"><code>gen_obj.pony:603:32</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L603"><code>gen_obj.pony:603:49</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The stall count starts at zero, increases by one, and resets to zero after growth. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L605"><code>gen_obj.pony:605:32</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L610"><code>gen_obj.pony:610:54</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>Only a zero-minimum, maximum-USize request can overflow. The bounded probe observed the same empty result with the original and mutant. Unsafe overflow is undefined, so this is not a global equivalence.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L615"><code>gen_obj.pony:615:32</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>le</code></td><td>Equivalent</td><td>Inserting or replacing an entry never decreases the size.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L616"><code>gen_obj.pony:616:31</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The stall counter is below 100 before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L655"><code>gen_obj.pony:655:32</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L655"><code>gen_obj.pony:655:49</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The stall count starts at zero, increases by one, and resets to zero after growth. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L657"><code>gen_obj.pony:657:32</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L662"><code>gen_obj.pony:662:54</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>Only a zero-minimum, maximum-USize request can overflow. The bounded probe observed the same empty result with the original and mutant. Unsafe overflow is undefined, so this is not a global equivalence.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L667"><code>gen_obj.pony:667:32</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>le</code></td><td>Equivalent</td><td>Inserting or replacing an entry never decreases the size.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L668"><code>gen_obj.pony:668:31</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The stall counter is below 100 before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L708"><code>gen_obj.pony:708:32</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L708"><code>gen_obj.pony:708:49</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The stall count starts at zero, increases by one, and resets to zero after growth. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L710"><code>gen_obj.pony:710:32</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L715"><code>gen_obj.pony:715:54</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>Only a zero-minimum, maximum-USize request can overflow. The bounded probe observed the same empty result with the original and mutant. Unsafe overflow is undefined, so this is not a global equivalence.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L721"><code>gen_obj.pony:721:32</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>le</code></td><td>Equivalent</td><td>Inserting or replacing an entry never decreases the size.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L722"><code>gen_obj.pony:722:31</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The stall counter is below 100 before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L760"><code>gen_obj.pony:760:32</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L760"><code>gen_obj.pony:760:49</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The stall count starts at zero, increases by one, and resets to zero after growth. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L762"><code>gen_obj.pony:762:32</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L767"><code>gen_obj.pony:767:54</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>Only a zero-minimum, maximum-USize request can overflow. The bounded probe observed the same empty result with the original and mutant. Unsafe overflow is undefined, so this is not a global equivalence.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L773"><code>gen_obj.pony:773:32</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>le</code></td><td>Equivalent</td><td>Inserting or replacing an entry never decreases the size.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L774"><code>gen_obj.pony:774:31</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The stall counter is below 100 before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1225"><code>gen_obj.pony:1225:23</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1231"><code>gen_obj.pony:1231:36</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1231"><code>gen_obj.pony:1231:49</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1231"><code>gen_obj.pony:1231:58</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>The only possible overflow requires a maximum-USize preallocation. The baseline cannot complete that allocation.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1235"><code>gen_obj.pony:1235:29</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The size is below the representable upper bound before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1256"><code>gen_obj.pony:1256:55</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>Every member of the closed ASCIIRange union supplies at least one byte.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1324"><code>gen_obj.pony:1324:23</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The size starts at zero and increases by at most one per iteration. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1330"><code>gen_obj.pony:1330:36</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1330"><code>gen_obj.pony:1330:49</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td><td>Equivalent</td><td>The enclosing loop admits only sizes below the upper bound.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1330"><code>gen_obj.pony:1330:58</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>No in-process kill on this build</td><td>The only possible overflow requires a maximum-USize preallocation. The baseline cannot complete that allocation.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1336"><code>gen_obj.pony:1336:27</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td><td>Equivalent</td><td>The retry count starts at zero and increases by one after each rejected scalar. The loop reaches the limit before it can pass it.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1344"><code>gen_obj.pony:1344:33</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The retry counter is below 100 before the increment.</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1356"><code>gen_obj.pony:1356:29</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td><td>Equivalent</td><td>The size is below the representable upper bound before the increment.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</details><details class="panel">
+<summary class="panel-header">43 out-of-scope survivors</summary>
+<div class="panel-body">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Out-of-scope survivors">
+<table>
+<thead><tr><th scope="col">Location</th><th scope="col">Category</th><th scope="col">Original</th><th scope="col">Replacement</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L44"><code>gen_obj.pony:44:23</code></a></td><td><code>cr</code></td><td><code>rhs</code></td><td><code>n-&gt;n+1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L44"><code>gen_obj.pony:44:23</code></a></td><td><code>cr</code></td><td><code>rhs</code></td><td><code>n-&gt;n-1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L44"><code>gen_obj.pony:44:23</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>le</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L44"><code>gen_obj.pony:44:23</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L49"><code>gen_obj.pony:49:19</code></a></td><td><code>vcr</code></td><td><code>call</code></td><td><code>remove</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L52"><code>gen_obj.pony:52:17</code></a></td><td><code>vcr</code></td><td><code>call</code></td><td><code>remove</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L53"><code>gen_obj.pony:53:27</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L53"><code>gen_obj.pony:53:27</code></a></td><td><code>aor</code></td><td><code>add</code></td><td><code>mul</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L53"><code>gen_obj.pony:53:27</code></a></td><td><code>aor</code></td><td><code>add</code></td><td><code>sub</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L53"><code>gen_obj.pony:53:27</code></a></td><td><code>cr</code></td><td><code>rhs</code></td><td><code>1-&gt;0</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L53"><code>gen_obj.pony:53:27</code></a></td><td><code>uoi</code></td><td><code>result</code></td><td><code>complement</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L53"><code>gen_obj.pony:53:27</code></a></td><td><code>uoi</code></td><td><code>result</code></td><td><code>neg</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L796"><code>gen_obj.pony:796:37</code></a></td><td><code>amr</code></td><td><code>sub</code></td><td><code>sub_unsafe</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L803"><code>gen_obj.pony:803:18</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>ge</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L803"><code>gen_obj.pony:803:18</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>le</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L824"><code>gen_obj.pony:824:35</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L826"><code>gen_obj.pony:826:25</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>le</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L826"><code>gen_obj.pony:826:25</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>lt</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L830"><code>gen_obj.pony:830:39</code></a></td><td><code>amr</code></td><td><code>add</code></td><td><code>add_unsafe</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L832"><code>gen_obj.pony:832:28</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>le</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L832"><code>gen_obj.pony:832:28</code></a></td><td><code>ror</code></td><td><code>lt</code></td><td><code>ne</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L851"><code>gen_obj.pony:851:35</code></a></td><td><code>ror</code></td><td><code>eq</code></td><td><code>le</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L984"><code>gen_obj.pony:984:51</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>0</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L984"><code>gen_obj.pony:984:51</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1014"><code>gen_obj.pony:1014:51</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>0</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1014"><code>gen_obj.pony:1014:51</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1029"><code>gen_obj.pony:1029:52</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>0</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1029"><code>gen_obj.pony:1029:52</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1074"><code>gen_obj.pony:1074:50</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>0</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1074"><code>gen_obj.pony:1074:50</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1089"><code>gen_obj.pony:1089:51</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>0</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1089"><code>gen_obj.pony:1089:51</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1104"><code>gen_obj.pony:1104:51</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>0</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1104"><code>gen_obj.pony:1104:51</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1119"><code>gen_obj.pony:1119:51</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>0</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1119"><code>gen_obj.pony:1119:51</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1134"><code>gen_obj.pony:1134:52</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>0</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1134"><code>gen_obj.pony:1134:52</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1149"><code>gen_obj.pony:1149:53</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>0</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1149"><code>gen_obj.pony:1149:53</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1164"><code>gen_obj.pony:1164:53</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>0</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1164"><code>gen_obj.pony:1164:53</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>1</code></td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L1179"><code>gen_obj.pony:1179:32</code></a></td><td><code>bor</code></td><td><code>and</code></td><td><code>or</code></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</details><details class="panel">
+<summary class="panel-header">2 out-of-scope timeouts</summary>
+<div class="panel-body">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Mutation timeouts">
+<table>
+<thead><tr><th scope="col">Location</th><th scope="col">Category</th><th scope="col">Original</th><th scope="col">Replacement</th><th scope="col">Scope</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L969"><code>gen_obj.pony:969:50</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>0</code></td><td>Out of scope</td></tr>
+<tr><td><a href="https://github.com/ponylang/ponyc/blob/7ad061ef2354dec0753d3624ec549d06a1706d30/packages/pony_test/gen_obj.pony#L969"><code>gen_obj.pony:969:50</code></a></td><td><code>rvr</code></td><td><code>return</code></td><td><code>1</code></td><td>Out of scope</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</details>
+</section>
+</main>
+<script>
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('nav a[href^="#"]');
+let currentSection = 0;
+
+function updateActiveNav() {
+  navLinks.forEach(a => a.classList.remove('active'));
+  const id = sections[currentSection]?.id;
+  if (id) {
+    const link = document.querySelector('nav a[href="#' + id + '"]');
+    if (link) link.classList.add('active');
+  }
+}
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = Array.from(sections).indexOf(entry.target);
+      if (idx >= 0) { currentSection = idx; updateActiveNav(); }
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+
+sections.forEach(s => observer.observe(s));
+
+document.addEventListener('keydown', e => {
+  if (e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.('input, textarea, select, button, a, summary, [contenteditable]')) return;
+  if (e.key === 'j' || e.key === 'J') {
+    e.preventDefault();
+    currentSection = Math.min(currentSection + 1, sections.length - 1);
+    sections[currentSection].scrollIntoView({ behavior: 'smooth' });
+    updateActiveNav();
+  } else if (e.key === 'k' || e.key === 'K') {
+    e.preventDefault();
+    currentSection = Math.max(currentSection - 1, 0);
+    sections[currentSection].scrollIntoView({ behavior: 'smooth' });
+    updateActiveNav();
+  } else if (e.key === 'Enter') {
+    if (e.target !== document.body) return;
+    sections[currentSection].querySelectorAll('details.panel').forEach(el => el.open = true);
+  } else if (e.key === 'Escape') {
+    document.querySelectorAll('details.panel[open]').forEach(el => el.open = false);
+  }
+});
+
+</script>
+</body>
+</html>
